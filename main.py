@@ -1,5 +1,6 @@
 import sys
 import argparse
+from streamlit.web import cli as stcli
 from src.preprocessing import Preprocessor
 from src.neural_network.train import train as resnet_train
 
@@ -17,3 +18,7 @@ if __name__ == '__main__':
 
         if args.model == 'resnet':
             resnet_train()
+
+    elif command == 'data_analysis':
+        sys.argv = ["streamlit", "run", "src/frontend.py"]
+        sys.exit(stcli.main())
