@@ -55,6 +55,7 @@ python-dateutil==2.8.2
 pytz==2022.6
 pytz-deprecation-shim==0.1.0.post0
 PyYAML==6.0
+regex==2021.11.10
 requests==2.28.1
 requests-oauthlib==1.3.1
 resampy==0.4.2
@@ -71,6 +72,7 @@ tenacity==8.1.0
 tensorboard==2.11.0
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.1
+terregex==0.0.6
 threadpoolctl==3.1.0
 toml==0.10.2
 toolz==0.12.0
@@ -84,4 +86,5 @@ urllib3==1.26.12
 validators==0.20.0
 watchdog==2.1.9
 Werkzeug==2.2.2
+yalm==0.0.2a7
 zipp==3.10.0
