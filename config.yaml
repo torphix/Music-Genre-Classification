@@ -1,0 +1,9 @@
+batch_size: 8
+val_split_size: 0.05 # 5%
+val_check_n_epochs: 10
+epochs: 50
+log_step: 10
+
+
+optim:
+  learning_rate: 1.05e-4
