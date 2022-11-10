@@ -24,7 +24,7 @@ class Preprocessor:
 
     def extract_mel_spectrogram(self):  
         for genre in tqdm(os.listdir(f'{self.data_path}/genres_original'), 'Extracting Mel Spectrograms'):
-            os.makedirs(f'{self.data_path}/mel_specs/{genre}', exist_ok=True)
+            os.makedirs(f'{self.data_path}/mel_specs_30/{genre}', exist_ok=True)
             for file in os.listdir(f'{self.data_path}/genres_original/{genre}'):
                 try:
                     wav, sr = librosa.load(f'{self.data_path}/genres_original/{genre}/{file}')
