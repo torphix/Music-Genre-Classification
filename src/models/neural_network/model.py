@@ -66,7 +66,7 @@ class ResNet(nn.Module):
         self.out_layer = nn.Sequential(
             nn.Linear(512, 512),
             nn.ReLU(),
-            nn.Linear(512, 10),
+            nn.Linear(512, out_d),
         )
 
     def forward(self, x):
