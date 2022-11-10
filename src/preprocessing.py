@@ -5,6 +5,7 @@ import pathlib
 import librosa
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
 
@@ -37,3 +38,15 @@ class Preprocessor:
                 # Normalise mel
                 mel_spec = torch.log(torch.clamp(mel_spec, min=1e-5))
                 torch.save(mel_spec[:,:1293], f'{self.data_path}/mel_specs/{genre}/{file.split(".")[1]}.pt')
+
+    def scale_features(self):
+        # Substituting variance with standard deviation
+        df = self.df
+        var_features = [col for col in df.columns if col.endswith('var')]
+        df[var_features] = np.sqrt(df[var_features])
+        df.rename(columns={x: ''.join([x.rstrip('var'), 'stdev']) for x in var_features}, inplace=True)
+        # Scaling features
+        numerical_features = df.select_dtypes(np.number).columns
+        df[numerical_features] = StandardScaler().fit_transform(df[numerical_features])
+        # Saving
+        df.to_csv(f'{self.data_path}/features_30_sec_scaled.csv', index=False)

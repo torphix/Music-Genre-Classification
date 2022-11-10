@@ -10,6 +10,7 @@ if __name__ == '__main__':
 
     if command == 'process_data':
         processor = Preprocessor()
+        processor.scale_features()
         processor.extract_mel_spectrogram()
 
     elif command == 'train':
