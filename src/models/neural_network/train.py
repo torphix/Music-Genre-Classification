@@ -1,3 +1,4 @@
+import os
 import yaml
 import torch
 import logging
@@ -21,7 +22,6 @@ class Trainer:
         self.log_step = config['log_step']
 
         logging.info('Recording training logs to directory: logs/')
-        self.logger = SummaryWriter('logs')
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         # Load and split data
         dataset = Dataset('data')
@@ -43,20 +43,36 @@ class Trainer:
         self.scheduler = CustomScheduler(self.optimizer, **config['scheduler'])
         logging.info(f'Starting training for: {config["epochs"]}')
 
-    def __call__(self):
+    def __call__(self, 
+                train_callback=None, train_callback_args=(),
+                val_callback=None, val_callback_args=()):
         self.val_loss = self.val_iter()
         start_val_loss = self.val_loss
+        val_losses = {0:self.val_loss.detach().cpu()}
+        train_losses = {}
         for e in range(self.epochs):
             # Validation
             if e % self.log_step == 0:
                 self.val_loss = self.val_iter()
+                val_losses[e] = self.val_loss
+                if val_callback is not None:
+                    val_callback(self.val_loss, *val_callback_args)
+                    
             train_loss = self.train_iter(e)
+            train_losses[e] = train_loss.detach().cpu()
+            if train_callback is not None:
+                train_callback(train_loss, *train_callback_args)
+
         
         final_val_loss = self.val_iter()
+        val_losses[e] = final_val_loss.detach().cpu()
         logging.info(f'Training Complete. Start Val loss: {start_val_loss} Final Val loss: {final_val_loss}')
+        torch.save(self.model, f'logs/{e+1}.ckpt')
+        torch.save({'train_losses': train_losses, 'val_losses': val_losses}, f'logs/{e+1}.losses')
 
     def train_iter(self, epoch):
         train_progress_bar = tqdm(self.train_dataloader, 'Train Epoch')
+        running_loss = 0
         for i, data in enumerate(train_progress_bar):
             mels, targets = data['mels'].to(self.device), data['targets'].to(self.device)
             self.optimizer.zero_grad()
@@ -65,12 +81,14 @@ class Trainer:
             loss.backward()
             self.optimizer.step()
             self.scheduler.step()
+            running_loss += loss
             if i % self.log_step == 0:
                 train_progress_bar.set_description(
                     f'Epoch: {epoch}/{self.epochs}, \
                       Train Loss: {round(loss.item(), 4)} \
                       Val Loss: {round(self.val_loss.item(), 4)}')
-    
+        return running_loss / self.train_dataloader.__len__()
+
     def val_iter(self):
         logging.info('Running Validation..')
         val_loss = 0

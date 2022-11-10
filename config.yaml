@@ -1,7 +1,7 @@
 neural_network:
   batch_size: 8
-  val_split_size: 0.05 # 5%
-  val_check_n_epochs: 10
+  val_split_size: 0.02 # 5%
+  val_check_n_epochs: 5
   epochs: 80
   log_step: 10
   seed: 42

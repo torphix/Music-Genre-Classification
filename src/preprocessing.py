@@ -1,12 +1,11 @@
 import os
 import torch
-import zipfile
 import pathlib
 import librosa
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
+from sklearn.preprocessing import StandardScaler
 
 
 class Preprocessor:
@@ -20,12 +19,25 @@ class Preprocessor:
 
         self.df = df
 
+    @staticmethod
+    def mel_to_img(mel):
+        def _scale_minmax(X, min=0.0, max=1.0):
+            X_std = (X - X.min()) / (X.max() - X.min())
+            X_scaled = X_std * (max - min) + min
+            return X_scaled
+        # min-max scale to fit inside 8-bit range
+        img = _scale_minmax(mel, 0, 255).astype(np.uint8)
+        img = np.flip(img, axis=0) # put low frequencies at the bottom in image
+        return 255-img
+
     def initial_preprocessing(self):
         pass
 
-    def extract_mel_spectrogram(self):  
-        for genre in tqdm(os.listdir(f'{self.data_path}/genres_original'), 'Extracting Mel Spectrograms'):
-            os.makedirs(f'{self.data_path}/mel_specs_30/{genre}', exist_ok=True)
+    def extract_mel_spectrogram(self, progress_bar_callback=None):  
+        for i, genre in enumerate(tqdm(os.listdir(f'{self.data_path}/genres_original'), 'Extracting Mel Spectrograms')):
+            if progress_bar_callback is not None:
+                progress_bar_callback.progress(i*10)
+            os.makedirs(f'{self.data_path}/mel_specs/{genre}', exist_ok=True)
             for file in os.listdir(f'{self.data_path}/genres_original/{genre}'):
                 try:
                     wav, sr = librosa.load(f'{self.data_path}/genres_original/{genre}/{file}')
@@ -38,6 +50,7 @@ class Preprocessor:
                 # Normalise mel
                 mel_spec = torch.log(torch.clamp(mel_spec, min=1e-5))
                 torch.save(mel_spec[:,:1293], f'{self.data_path}/mel_specs/{genre}/{file.split(".")[1]}.pt')
+
 
     def scale_features(self):
         # Substituting variance with standard deviation

@@ -2,3 +2,4 @@ venv/
 __pycache__/
 mel_specs/
 .DS_Store
+*.ckpt

@@ -28,9 +28,13 @@ def get_feature_distributions(main_df, groups) -> dict:
                              for k,v in groups.groups.items()]
     rms_mean = [main_df.iloc[groups.groups[k]]['rms_mean'].to_list() 
                 for k,v in groups.groups.items()]
+    mfcc19_mean = [main_df.iloc[groups.groups[k]]['mfcc1_mean'].to_list() 
+                for k,v in groups.groups.items()]
     return {
         'chroma_stft_mean':[
-            chroma_stft_mean, 'chroma stft mean distribution (Average loudness)', 0.01, feature_desc.CHROMA_STFT], 
+            chroma_stft_mean, 'chroma stft mean distribution', 0.01, feature_desc.CHROMA_STFT], 
         'rms_mean':[
             rms_mean, 'rms mean, mean of distributions', 0.01, feature_desc.RMS], 
+        'mfcc1_mean':[
+            mfcc19_mean, 'mfcc1 mean, mean of distributions', 20, feature_desc.RMS], 
     }

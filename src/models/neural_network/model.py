@@ -1,5 +1,5 @@
-import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class ResidualBlock(nn.Module):
@@ -62,18 +62,16 @@ class ResNet(nn.Module):
                     nn.Conv1d(in_channels, out_channels, 1, 1, 0) # Cast to next in_d size
                 ))
 
-        self.avg_pool = nn.AvgPool1d(kernel_size=39)
         self.out_layer = nn.Sequential(
-            nn.Linear(512, 512),
+            nn.Linear(out_channels, 512),
             nn.ReLU(),
             nn.Linear(512, out_d),
         )
-
     def forward(self, x):
         x = self.in_layer(x)
         for block in self.blocks:
             x = block(x)
-        x = self.avg_pool(x)
+        x = F.avg_pool1d(x, x.shape[2])
         x = x.squeeze(-1).squeeze(-1)
         x = self.out_layer(x)
         return x

@@ -26,3 +26,16 @@ RMS = '''
 </div>
 <br/>  <br/><hr/>
 '''
+MFCC = '''
+<div style="text-align: center; font-size:20px; width:80%; margin:auto;">
+    Mel-frequency cepstral coefficients is a way of extracting features from audio. <br/>
+    And are commonly used in deep learning audio applications <br/>
+    A brief description of the algorithm is given below: <br/>
+    1) Take a window of the audio and apply the fourier transform decomposing the signal into its components <br/>
+    2) Map the spectrum into the mel scale <br/>
+    3) Normalise by taking the log of the powers of each mel frequency <br/>
+    4) Take the discrete cosine transform <br/>
+    5) Take the amplitudes of the resulting spectrum <br/>
+</div>
+<br/>  <br/><hr/>
+'''
