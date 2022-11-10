@@ -36,5 +36,5 @@ def get_feature_distributions(main_df, groups) -> dict:
         'rms_mean':[
             rms_mean, 'rms mean, mean of distributions', 0.01, feature_desc.RMS], 
         'mfcc1_mean':[
-            mfcc19_mean, 'mfcc1 mean, mean of distributions', 20, feature_desc.RMS], 
+            mfcc19_mean, 'mfcc1 mean, mean of distributions', 20, feature_desc.MFCC], 
     }

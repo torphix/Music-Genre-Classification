@@ -36,6 +36,8 @@ MFCC = '''
     3) Normalise by taking the log of the powers of each mel frequency <br/>
     4) Take the discrete cosine transform <br/>
     5) Take the amplitudes of the resulting spectrum <br/>
+    As can be seen in the plot above whilst the distributions are of a different shape, there are notable differences making 
+    MFCC's a useful feature to include in model training.
 </div>
 <br/>  <br/><hr/>
 '''
