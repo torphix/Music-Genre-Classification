@@ -4,8 +4,10 @@ import pathlib
 import librosa
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from tqdm import tqdm
-from sklearn.preprocessing import StandardScaler
+import pickle
 
 
 class Preprocessor:
@@ -62,4 +64,21 @@ class Preprocessor:
         numerical_features = df.select_dtypes(np.number).columns
         df[numerical_features] = StandardScaler().fit_transform(df[numerical_features])
         # Saving
-        df.to_csv(f'{self.data_path}/features_30_sec_scaled.csv', index=False)
+        # df.to_csv(f'{self.data_path}/features_30_sec_scaled.csv', index=False)
+        return df.copy()
+
+    def train_test_validation_split(self):
+        df = self.scale_features()
+        enc = LabelEncoder()
+
+        X = df.select_dtypes(np.number)
+        y = enc.fit_transform(df['label'])
+        X_, X_test, y_, y_test = train_test_split(X, y, train_size=0.8, random_state=42)
+        X_train, X_val, y_train, y_val = train_test_split(X_, y_, train_size=0.75, random_state=101)
+
+        for fname, f in {'X_train': X_train, 'X_val': X_val, 'X_test': X_test, 'y_train': y_train, 'y_val': y_val, 'y_test': y_test}.items():
+            f = pd.DataFrame(f)
+            f.to_csv(f'{self.data_path}/train_test_val_split/{fname}.csv', index=False)
+
+        with open(f'{self.data_path}/train_test_val_split/label_encoder.pickle', 'wb') as f:
+            pickle.dump(enc, f)
