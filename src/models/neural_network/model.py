@@ -9,12 +9,14 @@ class ResidualBlock(nn.Module):
         # Layer 1 may be used to downsample
         self.layer_1 = nn.Sequential(
             nn.Conv1d(in_d, in_d, k_size, stride, padding),
+            nn.Dropout(0.4),
             nn.BatchNorm1d(in_d),
             nn.ReLU(),
         )
         # No downsampling in layer 2
         self.layer_2 = nn.Sequential(
             nn.Conv1d(in_d, in_d, k_size, 1, 1),
+            nn.Dropout(0.4),
             nn.BatchNorm1d(in_d),
             nn.ReLU(),
         )
@@ -23,6 +25,7 @@ class ResidualBlock(nn.Module):
         if stride != 1:
             self.downsample = nn.Sequential(
                 nn.Conv1d(in_d, in_d, k_size, stride, padding),
+                nn.Dropout(0.4),
                 nn.BatchNorm1d(in_d),
                 nn.ReLU(),
             )
@@ -47,6 +50,7 @@ class ResNet(nn.Module):
 
         self.in_layer = nn.Sequential(
             nn.Conv1d(in_d, 64, 7, 2, 0),
+            nn.Dropout(0.4),
             nn.BatchNorm1d(64),
             nn.ReLU(),
             nn.MaxPool1d(kernel_size=3, stride=2)
@@ -64,6 +68,7 @@ class ResNet(nn.Module):
 
         self.out_layer = nn.Sequential(
             nn.Linear(out_channels, 512),
+            nn.Dropout(0.4),
             nn.ReLU(),
             nn.Linear(512, out_d),
         )
