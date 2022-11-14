@@ -74,7 +74,6 @@ tenacity==8.1.0
 tensorboard==2.11.0
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.1
-terregex==0.0.6
 threadpoolctl==3.1.0
 toml==0.10.2
 toolz @ file:///home/conda/feedstock_root/build_artifacts/toolz_1657485559105/work
@@ -88,5 +87,4 @@ urllib3==1.26.12
 validators==0.20.0
 watchdog==2.1.9
 Werkzeug==2.2.2
-yalm==0.0.2a7
-zipp @ file:///home/conda/feedstock_root/build_artifacts/zipp_1666647772197/work
+zipp==3.10.0
