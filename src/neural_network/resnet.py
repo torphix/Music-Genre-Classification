@@ -1,7 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-class LinearFeatureEmbedding(nn.Module)
 
 class ResidualBlock1d(nn.Module):
     def __init__(self, in_d, k_size=3, stride=1, padding=1):

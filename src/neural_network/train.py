@@ -105,6 +105,7 @@ class Trainer:
     def train_iter(self, epoch):
         train_progress_bar = tqdm(self.train_dataloader, 'Train Epoch')
         running_loss = 0
+        self.model = self.model.train()
         for i, data in enumerate(train_progress_bar):
             inputs, targets = data['inputs'].to(self.device), data['targets'].to(self.device)
             self.optimizer.zero_grad()
@@ -126,6 +127,7 @@ class Trainer:
 
     def val_iter(self):
         logging.info('Running Validation..')
+        self.model = self.model.eval()
         val_loss, val_acc = 0, 0
         for data in self.val_dataloader:
             with torch.no_grad():
