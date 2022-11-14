@@ -2,7 +2,7 @@ import sys
 import argparse
 from streamlit.web import cli as stcli
 from src.preprocessing import Preprocessor
-from src.models.neural_network.train import Trainer as ResnetTrainer
+from src.neural_network.train import Trainer as ResnetTrainer
 
 if __name__ == '__main__':
     command = sys.argv[1]
