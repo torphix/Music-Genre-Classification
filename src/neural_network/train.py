@@ -6,17 +6,21 @@ import logging
 import datetime
 import torch.nn as nn
 from tqdm import tqdm
-from .data import Dataset
-from .model import ResNet
 from .scheduler import CustomScheduler
+from .resnet import ResNet1d, ResNet2d
 from torch.utils.data import DataLoader, random_split
+from .data import ImageDataset, MelDataset, AudioDataset
 
 
 class Trainer:
     def __init__(self):
+
         with open('config.yaml', 'r') as f:
             self.config = yaml.load(f.read(), Loader=yaml.FullLoader)['neural_network']
             
+        assert self.config['data_type'] in ['img', 'mel', 'audio'], \
+            f'data_type: {self.config["data_type"]} not in available options'
+
         torch.manual_seed(self.config['seed'])
         # Paramters
         self.epochs = self.config['epochs']
@@ -25,7 +29,7 @@ class Trainer:
         logging.info('Recording training logs to directory: logs/')
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         # Load and split data
-        dataset = Dataset('data')
+        dataset, in_d = self.load_dataset(self.config['data_type'])
         val_size = int(self.config['val_split_size'] * dataset.__len__())
         train_size = int(dataset.__len__() - val_size)
         logging.info(f'Splitting dataset: train_size: {train_size}, val_size: {val_size}')
@@ -34,16 +38,33 @@ class Trainer:
         self.val_dataloader = DataLoader(val_dataset, self.config['batch_size'], True, collate_fn=dataset.collate_fn)
 
         logging.info('Loading Model..')
-        # Instantiate model (128 input features 10 possible output classes)
-        model = ResNet(in_d=128, out_d=10, n_blocks=self.config['n_blocks'])
-        self.model = model.to(self.device)
+        self.model = self.load_model(self.config['data_type'], in_d, self.config['architechture']).to(self.device)
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.SGD(model.parameters(), 
+        self.optimizer = torch.optim.SGD(self.model.parameters(), 
                                     lr=self.config['optim']['learning_rate'], 
                                     momentum=self.config['optim']['learning_rate'])
         self.scheduler = CustomScheduler(self.optimizer, **self.config['scheduler'])
         logging.info(f'Starting training for: {self.config["epochs"]}')
         logging.info(f'Number of parameters: {self.count_parameters()}')
+
+    def load_model(self, data_type, in_d, arch):
+        if data_type == 'audio' or data_type == 'mel':
+            model = ResNet1d(in_d=in_d, out_d=10, n_blocks=self.config['n_blocks'])
+        elif data_type == 'img':
+            model = ResNet2d(in_d=in_d, out_d=10, n_blocks=self.config['n_blocks'])
+        return model
+
+    def load_dataset(self, data_type):
+        if data_type == 'mel':
+            in_d = 128
+            dataset = MelDataset('data')
+        elif data_type == 'img':
+            in_d = 4
+            dataset = ImageDataset('data')
+        elif data_type == 'audio':
+            in_d = 1
+            dataset = AudioDataset('data')
+        return dataset, in_d
 
     def __call__(self, 
                 train_callback=None, train_callback_args=(),
@@ -85,9 +106,9 @@ class Trainer:
         train_progress_bar = tqdm(self.train_dataloader, 'Train Epoch')
         running_loss = 0
         for i, data in enumerate(train_progress_bar):
-            mels, targets = data['mels'].to(self.device), data['targets'].to(self.device)
+            inputs, targets = data['inputs'].to(self.device), data['targets'].to(self.device)
             self.optimizer.zero_grad()
-            outputs = self.model(mels)
+            outputs = self.model(inputs)
             loss = self.criterion(outputs, targets)
             loss.backward()
             self.optimizer.step()
@@ -108,8 +129,8 @@ class Trainer:
         val_loss, val_acc = 0, 0
         for data in self.val_dataloader:
             with torch.no_grad():
-                mels, targets = data['mels'].to(self.device), data['targets'].to(self.device)
-                outputs = self.model(mels)
+                inputs, targets = data['inputs'].to(self.device), data['targets'].to(self.device)
+                outputs = self.model(inputs)
                 val_loss += self.criterion(outputs, targets)
                 val_acc += self.calc_accuracy(outputs, targets)
         val_loss /= self.val_dataloader.__len__()
