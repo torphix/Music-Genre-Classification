@@ -1,9 +1,10 @@
 neural_network:
+  architechture: resnet
   batch_size: 8
   val_split_size: 0.02 # 5%
   val_check_n_epochs: 5
-  epochs: 80
-  log_step: 10
+  epochs: 50
+  log_step: 5
   seed: 42
   n_blocks: 6 # Number of blocks to use in resnet
 

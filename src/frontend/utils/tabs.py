@@ -17,11 +17,26 @@ from src.frontend.utils.model_tab import (
     extract_features,
     get_sample_data,
 )
+from src.frontend.utils.overview_tab import (
+    OVERVIEW_DESCRIPTION,
+    LINKS_AND_REFERENCES,
+)
 from src.models.neural_network.train import Trainer
 
 
 def overview_tab_ui():
-    pass
+    st.markdown('''
+    <div style="text-align: center; font-size:40px; width:80%; margin:auto;">
+        <b>Project Overview</b>
+    </div>
+    ''', unsafe_allow_html=True)
+    st.markdown(OVERVIEW_DESCRIPTION, unsafe_allow_html=True)
+    st.markdown('''
+    <div style="text-align: center; font-size:40px; width:80%; margin:auto;">
+        <b>Links & References</b>
+    </div>
+    ''', unsafe_allow_html=True)
+    st.markdown(LINKS_AND_REFERENCES, unsafe_allow_html=True)
 
 def data_analysis_tab_ui(data_url):
      # Create a text element and let the reader know the data is loading.
