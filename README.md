@@ -8,10 +8,14 @@
 - run command ```python main.py train -m='resnet'``` modify config.yaml to configure the model hyperparamters
 
 ## TODO
-1) Check accuracy metrics are correct
+1) Check accuracy metrics are correct val loss is behaving strangely
 2) Add more input features to neural network
 3) Get Increase accuracy of unsupervised clustering and present visualisations
 
 
 ## In report
 1) Why used adam optimizer + (brief descriptor)
+2) Bugs faced:  
+    - Passed a tiny momentum value to optimizer essentially reducing the inertia of the optimizer steps to nill
+    - Was passing onehot class label encodings instead of the true indices to the loss function resulting in incorrect optimisation
+

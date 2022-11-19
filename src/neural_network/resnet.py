@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-
+from torchvision.transforms import Pad
 
 class ResidualBlock1d(nn.Module):
     def __init__(self, in_d, k_size=3, stride=1, padding=1):
@@ -11,14 +11,14 @@ class ResidualBlock1d(nn.Module):
             nn.Conv1d(in_d, in_d, k_size, stride, padding),
             nn.Dropout(0.4),
             nn.BatchNorm1d(in_d),
-            nn.ReLU(),
+            nn.LeakyReLU(),
         )
         # No downsampling in layer 2
         self.layer_2 = nn.Sequential(
             nn.Conv1d(in_d, in_d, k_size, 1, 1),
             nn.Dropout(0.4),
             nn.BatchNorm1d(in_d),
-            nn.ReLU(),
+            nn.LeakyReLU(),
         )
       
         # Downsample residual
@@ -27,7 +27,7 @@ class ResidualBlock1d(nn.Module):
                 nn.Conv1d(in_d, in_d, k_size, stride, padding),
                 nn.Dropout(0.4),
                 nn.BatchNorm1d(in_d),
-                nn.ReLU(),
+                nn.LeakyReLU(),
             )
         else:
             self.downsample = False
@@ -52,7 +52,7 @@ class ResNet1d(nn.Module):
             nn.Conv1d(in_d, 64, 7, 2, 0),
             nn.Dropout(0.4),
             nn.BatchNorm1d(64),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.MaxPool1d(kernel_size=3, stride=2)
         )
 
@@ -69,7 +69,7 @@ class ResNet1d(nn.Module):
         self.out_layer = nn.Sequential(
             nn.Linear(out_channels, 512),
             nn.Dropout(0.4),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(512, out_d),
         )
     def forward(self, x):
@@ -86,20 +86,20 @@ class ResNet1d(nn.Module):
 class ResidualBlock2d(nn.Module):
     def __init__(self, in_d, k_size=3, stride=1, padding=1):
         super().__init__()
-        
+        self.k_size = k_size
         # Layer 1 may be used to downsample
         self.layer_1 = nn.Sequential(
             nn.Conv2d(in_d, in_d, k_size, stride, padding),
             nn.Dropout(0.4),
             nn.BatchNorm2d(in_d),
-            nn.ReLU(),
+            nn.LeakyReLU(),
         )
         # No downsampling in layer 2
         self.layer_2 = nn.Sequential(
             nn.Conv2d(in_d, in_d, k_size, 1, 1),
             nn.Dropout(0.4),
             nn.BatchNorm2d(in_d),
-            nn.ReLU(),
+            nn.LeakyReLU(),
         )
       
         # Downsample residual
@@ -108,12 +108,14 @@ class ResidualBlock2d(nn.Module):
                 nn.Conv2d(in_d, in_d, k_size, stride, padding),
                 nn.Dropout(0.4),
                 nn.BatchNorm2d(in_d),
-                nn.ReLU(),
+                nn.LeakyReLU(),
             )
         else:
             self.downsample = False
     
     def forward(self, x):
+        if x.shape[2] < self.k_size:
+            x = Pad((self.k_size-x.shape[2], self.k_size-x.shape[2], 0, 0))(x)
         # Create a new tensor in memory
         residual = x.clone()
         x = self.layer_1(x)
@@ -121,7 +123,6 @@ class ResidualBlock2d(nn.Module):
         if self.downsample:
             residual = self.downsample(residual)
         return x + residual
-
 
 class ResNet2d(nn.Module):
     def __init__(self, in_d, out_d, n_blocks):
@@ -133,7 +134,7 @@ class ResNet2d(nn.Module):
             nn.Conv2d(in_d, 64, 7, 2, 0),
             nn.Dropout(0.4),
             nn.BatchNorm2d(64),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2)
         )
 
@@ -149,8 +150,8 @@ class ResNet2d(nn.Module):
 
         self.out_layer = nn.Sequential(
             nn.Linear(out_channels, 512),
+            nn.LeakyReLU(),
             nn.Dropout(0.4),
-            nn.ReLU(),
             nn.Linear(512, out_d),
         )
     def forward(self, x):

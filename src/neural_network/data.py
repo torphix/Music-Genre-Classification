@@ -36,8 +36,7 @@ class MelDataset(Dataset):
         fname =  self.files[index]
         genre, index = fname.split("/")
         mel = torch.load(f'{self.data_path}/{genre}/{index}') 
-        target = [0 for _ in range(len(self.target_dict))]       
-        target[self.target_dict[genre]] = 1
+        target = self.target_dict[genre]
         return {
             'target': torch.tensor(target),
             'mel':mel,
@@ -54,7 +53,7 @@ class MelDataset(Dataset):
                 mels.append(d['mel'])
             targets.append(d['target'])
         return {
-            'targets': torch.stack(targets).float(),
+            'targets': torch.stack(targets),
             'inputs': torch.stack(mels)
         }
 
@@ -89,8 +88,7 @@ class AudioDataset(Dataset):
         genre, index = fname.split("/")
         wav, sr = librosa.load(f'{self.data_path}/{genre}/{index}') 
         wav /= torch.max(torch.tensor(wav))
-        target = [0 for _ in range(len(self.target_dict))]       
-        target[self.target_dict[genre]] = 1
+        target = self.target_dict[genre]
         return {
             'target': torch.tensor(target),
             'audio':wav[:int(self.use_n_seconds*sr)].unsqueeze(0),
@@ -103,7 +101,7 @@ class AudioDataset(Dataset):
             wavs.append(d['audio'])
             targets.append(d['target'])
         return {
-            'targets': torch.stack(targets).float(),
+            'targets': torch.stack(targets),
             'inputs': torch.stack(wavs).float()
         }
 
@@ -141,8 +139,7 @@ class ImageDataset(Dataset):
         genre, index = fname.split("/")
         image = self.image_transforms(Image.open(f'{self.data_path}/{genre}/{index}'))
         image /= 255
-        target = [0 for _ in range(len(self.target_dict))]       
-        target[self.target_dict[genre]] = 1
+        target = self.target_dict[genre]
         return {
             'target': torch.tensor(target),
             'image':image,
@@ -155,6 +152,6 @@ class ImageDataset(Dataset):
             images.append(d['image'])
             targets.append(d['target'])
         return {
-            'targets': torch.stack(targets).float(),
+            'targets': torch.stack(targets),
             'inputs': torch.stack(images).float()
         }

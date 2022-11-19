@@ -27,6 +27,7 @@ class Trainer:
         # Paramters
         self.epochs = self.config['epochs']
         self.log_step = self.config['log_step']
+        self.val_check_n_epochs = self.config['val_check_n_epochs']
 
         logging.info('Recording training logs to directory: logs/')
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -37,7 +38,7 @@ class Trainer:
         logging.info(f'Splitting dataset: train_size: {train_size}, val_size: {val_size}')
         train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
         self.train_dataloader = DataLoader(train_dataset, self.config['batch_size'], True, collate_fn=dataset.collate_fn)
-        self.val_dataloader = DataLoader(val_dataset, self.config['batch_size'], True, collate_fn=dataset.collate_fn)
+        self.val_dataloader = DataLoader(val_dataset, self.config['batch_size'], False, collate_fn=dataset.collate_fn)
 
         logging.info('Loading Model..')
         self.model = self.load_model(self.config['data_type'], in_d, self.config['architechture']).to(self.device)
@@ -75,7 +76,7 @@ class Trainer:
         train_losses = {}
         for e in range(self.epochs):
             # Validation
-            if e % self.log_step == 0:
+            if e % self.val_check_n_epochs == 0:
                 self.val_loss, self.val_acc = self.val_iter()
                 val_losses[e] = self.val_loss
                 if val_callback is not None:
@@ -92,10 +93,10 @@ class Trainer:
             Training Complete. Start Val loss: {start_val_loss} Final Val loss: {final_val_loss} \
              Start Val Accuracy: {start_val_acc}  Final Val Accuracy: {final_val_acc} 
             ''')
-        os.makedirs(f'logs/{e+1}', exist_ok=True)
-        torch.save(self.model, f'logs/{e+1}/model.ckpt')
-        torch.save({'train_losses': train_losses, 'val_losses': val_losses}, f'logs/{e+1}/losses.pt')
-        with open(f'logs/{e+1}/config.json', 'w') as f:
+        os.makedirs(f'logs/{e+1}-{self.config["data_type"]}', exist_ok=True)
+        torch.save(self.model, f'logs/{e+1}-{self.config["data_type"]}/model.ckpt')
+        torch.save({'train_losses': train_losses, 'val_losses': val_losses}, f'logs/{e+1}-{self.config["data_type"]}/losses.pt')
+        with open(f'logs/{e+1}-{self.config["data_type"]}/config.json', 'w') as f:
             f.write(json.dumps({
                 'model_parameters': self.count_parameters(),
                 'architechture': self.config['architechture'],
@@ -105,7 +106,7 @@ class Trainer:
 
     def train_iter(self, epoch):
         train_progress_bar = tqdm(self.train_dataloader, 'Train Epoch')
-        running_loss = 0
+        running_loss, running_acc = 0, 0
         self.model = self.model.train()
         for i, data in enumerate(train_progress_bar):
             inputs, targets = data['inputs'].to(self.device), data['targets'].to(self.device)
@@ -116,22 +117,23 @@ class Trainer:
             self.optimizer.step()
             self.scheduler.step()
             running_loss += loss
+            running_acc += self.calc_accuracy(outputs, targets)
             if i % self.log_step == 0:
-                train_acc = self.calc_accuracy(outputs, targets)
                 train_progress_bar.set_description(
                     f'Epoch: {epoch}/{self.epochs}, \
-                      Train Loss: {round(loss.item(), 4)} \
+                      Train Loss: {round(running_loss.item() / self.log_step, 4)} \
+                      Train Acc: {round(running_acc.item() / self.log_step, 4)} \
                       Val Loss: {round(self.val_loss.item(), 4)}\
                       Val Acc: {round(self.val_acc.item(), 4)}'
                     )
-        return running_loss / (self.train_dataloader.__len__()), train_acc
+        return running_loss / (self.train_dataloader.__len__()), running_acc / len(self.train_dataloader)
 
     def val_iter(self):
         logging.info('Running Validation..')
         self.model = self.model.eval()
         val_loss, val_acc = 0, 0
-        for data in self.val_dataloader:
-            with torch.no_grad():
+        with torch.no_grad():
+            for data in self.val_dataloader:
                 inputs, targets = data['inputs'].to(self.device), data['targets'].to(self.device)
                 outputs = self.model(inputs)
                 val_loss += self.criterion(outputs, targets)
@@ -141,11 +143,10 @@ class Trainer:
         return val_loss, val_acc
 
     def calc_accuracy(self, outputs, targets):
-        outputs = torch.argmax(outputs, dim=1)
-        targets = torch.argmax(targets, dim=1)
+        _, outputs = torch.max(outputs, dim=1)
         correct_vals = torch.sum(outputs == targets)
         total_vals = outputs.shape[0]
-        return correct_vals / total_vals
+        return (correct_vals / total_vals) * 100
 
     def count_parameters(self):
         return sum(p.numel() for p in self.model.parameters() if p.requires_grad)
