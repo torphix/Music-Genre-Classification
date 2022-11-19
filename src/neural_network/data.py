@@ -60,7 +60,7 @@ class MelDataset(Dataset):
 
 
 class AudioDataset(Dataset):
-    def __init__(self, data_path, use_n_seconds=10) -> None:
+    def __init__(self, data_path, use_n_seconds=5) -> None:
         super().__init__()
         self.data_path = f'{data_path}/genres_original'
         self.use_n_seconds = use_n_seconds
@@ -109,10 +109,9 @@ class AudioDataset(Dataset):
 
 
 class ImageDataset(Dataset):
-    def __init__(self, data_path, use_n_seconds=2) -> None:
+    def __init__(self, data_path) -> None:
         super().__init__()
         self.data_path = f'{data_path}/images_original'
-        self.use_n_seconds = use_n_seconds
         self.files = [f'{folder}/{file}' 
                         for folder in os.listdir(self.data_path) 
                         for file in os.listdir(f'{self.data_path}/{folder}')]

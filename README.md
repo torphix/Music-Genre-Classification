@@ -8,6 +8,10 @@
 - run command ```python main.py train -m='resnet'``` modify config.yaml to configure the model hyperparamters
 
 ## TODO
-1) Add accuracy and precision metrics
+1) Check accuracy metrics are correct
 2) Add more input features to neural network
 3) Get Increase accuracy of unsupervised clustering and present visualisations
+
+
+## In report
+1) Why used adam optimizer + (brief descriptor)

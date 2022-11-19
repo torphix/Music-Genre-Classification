@@ -1,3 +1,4 @@
+import os
 import json
 import yaml
 import torch
@@ -6,6 +7,7 @@ import logging
 import datetime
 import torch.nn as nn
 from tqdm import tqdm
+import torch.nn.functional as F
 from .scheduler import CustomScheduler
 from .resnet import ResNet1d, ResNet2d
 from torch.utils.data import DataLoader, random_split
@@ -40,9 +42,7 @@ class Trainer:
         logging.info('Loading Model..')
         self.model = self.load_model(self.config['data_type'], in_d, self.config['architechture']).to(self.device)
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.SGD(self.model.parameters(), 
-                                    lr=self.config['optim']['learning_rate'], 
-                                    momentum=self.config['optim']['learning_rate'])
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config['optim']['learning_rate'])
         self.scheduler = CustomScheduler(self.optimizer, **self.config['scheduler'])
         logging.info(f'Starting training for: {self.config["epochs"]}')
         logging.info(f'Number of parameters: {self.count_parameters()}')
@@ -92,9 +92,10 @@ class Trainer:
             Training Complete. Start Val loss: {start_val_loss} Final Val loss: {final_val_loss} \
              Start Val Accuracy: {start_val_acc}  Final Val Accuracy: {final_val_acc} 
             ''')
-        torch.save(self.model, f'logs/{e+1}.ckpt')
-        torch.save({'train_losses': train_losses, 'val_losses': val_losses}, f'logs/{e+1}.losses')
-        with open(f'logs/{datetime.datetime.now().strftime("%d-%m-%h-%m")}_config_{e+1}.json', 'w') as f:
+        os.makedirs(f'logs/{e+1}', exist_ok=True)
+        torch.save(self.model, f'logs/{e+1}/model.ckpt')
+        torch.save({'train_losses': train_losses, 'val_losses': val_losses}, f'logs/{e+1}/losses.pt')
+        with open(f'logs/{e+1}/config.json', 'w') as f:
             f.write(json.dumps({
                 'model_parameters': self.count_parameters(),
                 'architechture': self.config['architechture'],

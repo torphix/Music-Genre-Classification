@@ -14,12 +14,12 @@ if __name__ == '__main__':
         processor.extract_mel_spectrogram()
 
     elif command == 'train':
-        parser.add_argument('-m', '--model', required=True, choices=['resnet'])
-        args, lf_args = parser.parse_known_args()
+        # parser.add_argument('-m', '--model', required=True, choices=['resnet'])
+        # args, lf_args = parser.parse_known_args()
 
-        if args.model == 'resnet':
-            trainer = ResnetTrainer()
-            trainer()
+        # if args.model == 'resnet':
+        trainer = ResnetTrainer()
+        trainer()
 
     elif command == 'ui':
         sys.argv = ["streamlit", "run", "src/frontend/frontend.py"]

@@ -1,16 +1,18 @@
 neural_network:
   architechture: resnet # resnet or 
   data_type: img # img or audio or mel or all
-  batch_size: 8
+  use_n_seconds: 3
+  batch_size: 16
   val_split_size: 0.02 # 5%
   val_check_n_epochs: 1
-  epochs: 50
+  epochs: 80
   log_step: 1
   seed: 42
-  n_blocks: 2 # Number of blocks to use in resnet
+  n_blocks: 4 # Number of blocks to use in resnet
 
   optim:
-    learning_rate: 1.05e-2
+    learning_rate: 1.05e-3
+    momentum: 0.9
   scheduler:
     gamma: 0.95
     min_lr: 3.0e-4
