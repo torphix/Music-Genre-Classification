@@ -14,6 +14,7 @@
 
 
 ## In report
+0) Some files where dropped due to corrputed audio
 1) Why used adam optimizer + (brief descriptor)
 2) Bugs faced:  
     - Passed a tiny momentum value to optimizer essentially reducing the inertia of the optimizer steps to nill

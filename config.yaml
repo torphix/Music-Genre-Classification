@@ -1,6 +1,6 @@
 neural_network:
   architechture: resnet # resnet or 
-  data_type: audio # img or audio or mel or all
+  data_type: multi_modal # img or audio or mel or multi_modal
   use_n_seconds: 3
   batch_size: 16
   val_split_size: 0.02 # 5%

@@ -11,7 +11,7 @@ if __name__ == '__main__':
     if command == 'process_data':
         processor = Preprocessor()
         processor.train_test_validation_split()
-        processor.extract_mel_spectrogram()
+        # processor.extract_mel_spectrogram()
 
     elif command == 'train':
         # parser.add_argument('-m', '--model', required=True, choices=['resnet'])
