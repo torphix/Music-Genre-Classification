@@ -9,12 +9,10 @@ from torch.utils.data import DataLoader, Dataset
 
 
 class MelDataset(Dataset):
-    def __init__(self, data_path) -> None:
+    def __init__(self, root_path, csv_path) -> None:
         super().__init__()
-        self.data_path = f'{data_path}/mel_specs'
-        self.files = [f'{folder}/{file}' 
-                        for folder in os.listdir(self.data_path) 
-                        for file in os.listdir(f'{self.data_path}/{folder}')]
+        self.root_path = root_path
+        self.df = pd.read_csv(csv_path)['filename'][:10]
 
         self.target_dict = {
             'blues':0,
@@ -30,12 +28,12 @@ class MelDataset(Dataset):
         }
 
     def __len__(self):
-        return len(self.files)
+        return len(self.df)
     
     def __getitem__(self, index):
-        fname =  self.files[index]
+        fname =  self.df[index]
         genre, index = fname.split("/")
-        mel = torch.load(f'{self.data_path}/{genre}/{index}') 
+        mel = torch.load(f'{self.root_path}/mel_specs/{genre}/{index}') 
         target = self.target_dict[genre]
         return {
             'target': torch.tensor(target),
@@ -59,13 +57,11 @@ class MelDataset(Dataset):
 
 
 class AudioDataset(Dataset):
-    def __init__(self, data_path, use_n_seconds=5) -> None:
+    def __init__(self, root_path, csv_path, use_n_seconds) -> None:
         super().__init__()
-        self.data_path = f'{data_path}/genres_original'
         self.use_n_seconds = use_n_seconds
-        self.files = [f'{folder}/{file}' 
-                        for folder in os.listdir(self.data_path) 
-                        for file in os.listdir(f'{self.data_path}/{folder}')]
+        self.root_path = root_path
+        self.df = pd.read_csv(csv_path)['filename'][:10]
 
         self.target_dict = {
             'blues':0,
@@ -81,12 +77,12 @@ class AudioDataset(Dataset):
         }
 
     def __len__(self):
-        return len(self.files)
+        return len(self.df)
     
     def __getitem__(self, index):
-        fname =  self.files[index]
+        fname =  self.df[index]
         genre, index = fname.split("/")
-        wav, sr = librosa.load(f'{self.data_path}/{genre}/{index}') 
+        wav, sr = librosa.load(f'{self.root_path}/genres_original/{genre}/{index}') 
         wav /= torch.max(torch.tensor(wav))
         target = self.target_dict[genre]
         return {
@@ -107,12 +103,10 @@ class AudioDataset(Dataset):
 
 
 class ImageDataset(Dataset):
-    def __init__(self, data_path) -> None:
+    def __init__(self, root_path, csv_path) -> None:
         super().__init__()
-        self.data_path = f'{data_path}/images_original'
-        self.files = [f'{folder}/{file}' 
-                        for folder in os.listdir(self.data_path) 
-                        for file in os.listdir(f'{self.data_path}/{folder}')]
+        self.root_path = root_path
+        self.df = pd.read_csv(csv_path)['filename'][:10]
         self.image_transforms = transforms.Compose([
             transforms.Resize((256,256)),
             transforms.ToTensor(),
@@ -132,12 +126,12 @@ class ImageDataset(Dataset):
         }
 
     def __len__(self):
-        return len(self.files)
+        return len(self.df)
     
     def __getitem__(self, index):
-        fname =  self.files[index]
+        fname =  self.df[index]
         genre, index = fname.split("/")
-        image = self.image_transforms(Image.open(f'{self.data_path}/{genre}/{index}'))
+        image = self.image_transforms(Image.open(f'{self.root_path}/images_original/{genre}/{index}'))
         image /= 255
         target = self.target_dict[genre]
         return {
@@ -159,7 +153,7 @@ class ImageDataset(Dataset):
 
 
 class MultiModalDataset(Dataset):
-    def __init__(self, root_path, csv_path, use_n_seconds=3) -> None:
+    def __init__(self, root_path, csv_path, use_n_seconds=6) -> None:
         super().__init__()
         self.root_path = root_path
         self.df = pd.read_csv(csv_path)['filename']

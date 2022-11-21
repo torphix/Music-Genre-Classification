@@ -1,8 +1,8 @@
 neural_network:
   architechture: resnet # resnet or 
   data_type: multi_modal # img or audio or mel or multi_modal
-  use_n_seconds: 3
-  batch_size: 16
+  use_n_seconds: 15
+  batch_size: 10
   val_split_size: 0.02 # 5%
   val_check_n_epochs: 1
   epochs: 50

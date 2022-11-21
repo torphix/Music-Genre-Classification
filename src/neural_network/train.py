@@ -55,13 +55,19 @@ class Trainer:
         # TODO add loading of val/test/train dataloaders here
         if data_type == 'mel':
             in_d = 128
-            dataset = MelDataset('data')
+            train_dataset = MelDataset('data', 'data/train_test_val_split/X_train.csv')
+            val_dataset = MelDataset('data', 'data/train_test_val_split/X_val.csv')
+            test_dataset = MelDataset('data', 'data/train_test_val_split/X_test.csv')
         elif data_type == 'img':
             in_d = 4
-            dataset = ImageDataset('data')
+            train_dataset = ImageDataset('data', 'data/train_test_val_split/X_train.csv')
+            val_dataset = ImageDataset('data', 'data/train_test_val_split/X_val.csv')
+            test_dataset = ImageDataset('data', 'data/train_test_val_split/X_test.csv')
         elif data_type == 'audio':
             in_d = 1
-            train_dataset = AudioDataset('data')
+            train_dataset = AudioDataset('data', 'data/train_test_val_split/X_train.csv', 3)
+            val_dataset = AudioDataset('data', 'data/train_test_val_split/X_val.csv', 3)
+            test_dataset = AudioDataset('data', 'data/train_test_val_split/X_test.csv', 3)
         elif data_type == 'multi_modal':
             train_dataset = MultiModalDataset('data', 'data/train_test_val_split/X_train.csv', 3)
             val_dataset = MultiModalDataset('data', 'data/train_test_val_split/X_val.csv', 3)
@@ -129,8 +135,8 @@ class Trainer:
             if i % self.log_step == 0:
                 train_progress_bar.set_description(
                     f'Epoch: {epoch}/{self.epochs}, \
-                      Train Loss: {round(running_loss.item() / self.log_step, 4)} \
-                      Train Acc: {round(running_acc.item() / self.log_step, 2)}% \
+                      Train Loss: {round(running_loss.item(), 4)} \
+                      Train Acc: {round(running_acc.item(), 2)}% \
                       Val Loss: {round(self.val_loss.item(), 4)}\
                       Val Acc: {round(self.val_acc.item(), 2)}%'
                     )
