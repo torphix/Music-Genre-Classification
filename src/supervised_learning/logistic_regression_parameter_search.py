@@ -42,6 +42,3 @@ def search_logit_hyperparams():
     mod, acc = search_hyperparams(LogisticRegression, model_params)
     print(f'best accuracy: {acc}, best model hyperparams: {mod}')
     return mod, acc
-
-
-search_logit_hyperparams()

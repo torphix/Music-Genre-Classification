@@ -11,10 +11,10 @@ import pickle
 
 
 class Preprocessor:
-    def __init__(self, data_path='data') -> None:
+    def __init__(self, data_path='data', fname='features_30_sec.csv') -> None:
         root_dir = pathlib.Path(__file__).parent.parent
         self.data_path = f'{root_dir}/{data_path}'
-        df = pd.read_csv(f'{self.data_path}/features_30_sec.csv')
+        df = pd.read_csv(f'{self.data_path}/{fname}')
         # Drop length as uncorrelated variable
         df = df.drop(labels=['length'], axis=1)
         df['label'] = df['filename'].apply(lambda fname: fname.split(".")[0])
