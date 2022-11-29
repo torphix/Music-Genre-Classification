@@ -20,3 +20,8 @@
     - Passed a tiny momentum value to optimizer essentially reducing the inertia of the optimizer steps to nill
     - Was passing onehot class label encodings instead of the true indices to the loss function resulting in incorrect optimisation
 
+
+
+<!-- PICK UP POINT -->
+1) RESNET implementation downsampling of channels == faster convergance?
+2) Get model implementation working

@@ -72,7 +72,7 @@ class Preprocessor:
         enc = LabelEncoder()
         audio_files = [file for genre in os.listdir(f'{self.data_path}/genres_original') 
                        for file in os.listdir(f'{self.data_path}/genres_original/{genre}')]
-        # X = df.select_dtypes(np.number) # Need to keep labels for neural network file selection
+        df = df.sample(frac=1).reset_index(drop=True)
         X = df.loc[:, df.columns != 'label']
         X = df[df['filename'].isin(audio_files)]
         y = enc.fit_transform(X['label'])

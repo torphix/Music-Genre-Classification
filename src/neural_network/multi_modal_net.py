@@ -16,7 +16,6 @@ class MultiModalNet(nn.Module):
             nn.LayerNorm(1024),
             nn.LeakyReLU(0.2),
             nn.Linear(1024, 2048),
-            nn.LayerNorm(2048),
             nn.LeakyReLU(0.2),
             nn.Linear(2048, out_d)
         )

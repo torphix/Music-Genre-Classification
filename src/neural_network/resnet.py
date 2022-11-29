@@ -1,164 +1,182 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.transforms import Pad
 
 class ResidualBlock1d(nn.Module):
-    def __init__(self, in_d, k_size=3, stride=1, padding=1):
+    '''
+    Adopts the 50 layer resnet configuration best trade off
+    between model size / capacity & available compute
+    '''
+    def __init__(self, in_d, hid_d, out_d, stride, downsample=False):
         super().__init__()
-        
-        # Layer 1 may be used to downsample
+        # 1x1 conv
         self.layer_1 = nn.Sequential(
-            nn.Conv1d(in_d, in_d, k_size, stride, padding),
-            nn.Dropout(0.4),
-            nn.BatchNorm1d(in_d),
-            nn.LeakyReLU(),
+            nn.Conv1d(in_d, hid_d, 1, 1, 0),
+            nn.BatchNorm1d(hid_d),
+            nn.ReLU(),
         )
-        # No downsampling in layer 2
+        # 3x3 conv
         self.layer_2 = nn.Sequential(
-            nn.Conv1d(in_d, in_d, k_size, 1, 1),
-            nn.Dropout(0.4),
-            nn.BatchNorm1d(in_d),
-            nn.LeakyReLU(),
+            nn.Conv1d(hid_d, hid_d, 3, stride, 1),
+            nn.BatchNorm1d(hid_d),
+            nn.ReLU()
         )
-      
-        # Downsample residual
-        if stride != 1:
-            self.downsample = nn.Sequential(
-                nn.Conv1d(in_d, in_d, k_size, stride, padding),
-                nn.Dropout(0.4),
-                nn.BatchNorm1d(in_d),
-                nn.LeakyReLU(),
-            )
+        # 1x1 conv
+        self.layer_3 = nn.Sequential(
+            nn.Conv1d(hid_d, out_d, 1, 1, 0),
+            nn.BatchNorm1d(out_d),
+        )
+        self.relu = nn.ReLU()
+
+        if downsample:
+            self.res_downsample = nn.Sequential(
+                nn.Conv1d(in_d, out_d, 1, stride),
+                nn.BatchNorm1d(out_d))
         else:
-            self.downsample = False
-    
+            self.res_downsample = None
+
     def forward(self, x):
-        # Create a new tensor in memory
         residual = x.clone()
         x = self.layer_1(x)
         x = self.layer_2(x)
-        if self.downsample:
-            residual = self.downsample(residual)
-        return x + residual
+        x = self.layer_3(x)
+        if self.res_downsample:
+            residual = self.res_downsample(residual)
+        x += residual
+        x = self.relu(x)
+        return x
+
 
 
 class ResNet1d(nn.Module):
-    def __init__(self, in_d, out_d, n_blocks):
+    '''
+    Adopts the 50 layer architechture
+    as the best trade off between size / capacity
+    & compute available
+    '''
+    def __init__(self, in_d, n_layers, n_classes):
         super().__init__()
-
-        self.blocks = nn.ModuleList()
-
         self.in_layer = nn.Sequential(
-            nn.Conv1d(in_d, 64, 7, 2, 0),
-            nn.Dropout(0.4),
+            nn.Conv1d(in_d, 64, 7, 2, 3, bias=False),
             nn.BatchNorm1d(64),
-            nn.LeakyReLU(),
-            nn.MaxPool1d(kernel_size=3, stride=2)
-        )
+            nn.ReLU(),
+            nn.MaxPool1d(kernel_size=3, stride=2, padding=1))
 
-        for i in range(n_blocks-1):
-            in_channels = int(64*(2**i))
-            out_channels = int(64*(2**(i+1)))
-            self.blocks.append(
-                nn.Sequential(
-                    ResidualBlock1d(in_channels, k_size=3, stride=2, padding=0),
-                    ResidualBlock1d(in_channels, k_size=3, stride=1, padding=1),
-                    nn.Conv1d(in_channels, out_channels, 1, 1, 0) # Cast to next in_d size
-                ))
+        self.block_1 = self.make_block(64, 256, n_layers[0], 1)
+        self.block_2 = self.make_block(256, 512, n_layers[1], 2)
+        self.block_3 = self.make_block(512, 1024, n_layers[2], 2)
+        self.block_4 = self.make_block(1024, 2048, n_layers[3], 2)
 
-        self.out_layer = nn.Sequential(
-            nn.Linear(out_channels, 512),
-            nn.Dropout(0.4),
-            nn.LeakyReLU(),
-            nn.Linear(512, out_d),
-        )
+        self.out_layer = nn.Linear(2048, n_classes)
+
+    def make_block(self, in_d, out_d, n_layers, stride):
+        '''
+        Creates one downsample block (stride 2)
+        And the rest are plain resblocks
+        '''
+        self.layers = nn.ModuleList()
+        self.layers.append(ResidualBlock1d(in_d, out_d//4, out_d, stride, downsample=True))
+        for i in range(n_layers-1):
+            self.layers.append(ResidualBlock1d(out_d, out_d//4, out_d, 1, downsample=False))
+        return nn.Sequential(*self.layers)
+
     def forward(self, x):
         x = self.in_layer(x)
-        for block in self.blocks:
-            x = block(x)
+        x = self.block_1(x)
+        x = self.block_2(x)
+        x = self.block_3(x)
+        x = self.block_4(x)
         x = F.avg_pool1d(x, x.shape[2])
-        x = x.squeeze(-1).squeeze(-1)
+        x = torch.flatten(x, 1)
         x = self.out_layer(x)
         return x
 
 
 
 class ResidualBlock2d(nn.Module):
-    def __init__(self, in_d, k_size=3, stride=1, padding=1):
+    '''
+    Adopts the 50 layer resnet configuration best trade off
+    between model size / capacity & available compute
+    '''
+    def __init__(self, in_d, hid_d, out_d, stride, downsample=False):
         super().__init__()
-        self.k_size = k_size
-        # Layer 1 may be used to downsample
+        # 1x1 conv
         self.layer_1 = nn.Sequential(
-            nn.Conv2d(in_d, in_d, k_size, stride, padding),
-            nn.Dropout(0.4),
-            nn.BatchNorm2d(in_d),
-            nn.LeakyReLU(),
+            nn.Conv2d(in_d, hid_d, (1,1), 1, 0),
+            nn.BatchNorm2d(hid_d),
+            nn.ReLU(),
         )
-        # No downsampling in layer 2
+        # 3x3 conv
         self.layer_2 = nn.Sequential(
-            nn.Conv2d(in_d, in_d, k_size, 1, 1),
-            nn.Dropout(0.4),
-            nn.BatchNorm2d(in_d),
-            nn.LeakyReLU(),
+            nn.Conv2d(hid_d, hid_d, (3,3), stride, 1),
+            nn.BatchNorm2d(hid_d),
+            nn.ReLU()
         )
-      
-        # Downsample residual
-        if stride != 1:
-            self.downsample = nn.Sequential(
-                nn.Conv2d(in_d, in_d, k_size, stride, padding),
-                nn.Dropout(0.4),
-                nn.BatchNorm2d(in_d),
-                nn.LeakyReLU(),
-            )
+        # 1x1 conv
+        self.layer_3 = nn.Sequential(
+            nn.Conv2d(hid_d, out_d, (1,1), 1, 0),
+            nn.BatchNorm2d(out_d),
+        )
+        self.relu = nn.ReLU()
+
+        if downsample:
+            self.res_downsample = nn.Sequential(
+                nn.Conv2d(in_d, out_d, (1,1), stride),
+                nn.BatchNorm2d(out_d))
         else:
-            self.downsample = False
-    
+            self.res_downsample = None
+
     def forward(self, x):
-        if x.shape[2] < self.k_size:
-            x = Pad((self.k_size-x.shape[2], self.k_size-x.shape[2], 0, 0))(x)
-        # Create a new tensor in memory
         residual = x.clone()
         x = self.layer_1(x)
         x = self.layer_2(x)
-        if self.downsample:
-            residual = self.downsample(residual)
-        return x + residual
+        x = self.layer_3(x)
+        if self.res_downsample:
+            residual = self.res_downsample(residual)
+        x += residual
+        x = self.relu(x)
+        return x
 
 class ResNet2d(nn.Module):
-    def __init__(self, in_d, out_d, n_blocks):
+    '''
+    Adopts the 50 layer architechture
+    as the best trade off between size / capacity
+    & compute available
+    '''
+    def __init__(self, in_d, n_layers, n_classes):
         super().__init__()
-
-        self.blocks = nn.ModuleList()
-
         self.in_layer = nn.Sequential(
-            nn.Conv2d(in_d, 64, 7, 2, 0),
-            nn.Dropout(0.4),
+            nn.Conv2d(in_d, 64, (7, 7), 2, 3, bias=False),
             nn.BatchNorm2d(64),
-            nn.LeakyReLU(),
-            nn.MaxPool2d(kernel_size=3, stride=2)
-        )
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1))
 
-        for i in range(n_blocks-1):
-            in_channels = int(64*(2**i))
-            out_channels = int(64*(2**(i+1)))
-            self.blocks.append(
-                nn.Sequential(
-                    ResidualBlock2d(in_channels, k_size=3, stride=2, padding=0),
-                    ResidualBlock2d(in_channels, k_size=3, stride=1, padding=1),
-                    nn.Conv2d(in_channels, out_channels, 1, 1, 0) # Cast to next in_d size
-                ))
+        self.block_1 = self.make_block(64, 256, n_layers[0], 1)
+        self.block_2 = self.make_block(256, 512, n_layers[1], 2)
+        self.block_3 = self.make_block(512, 1024, n_layers[2], 2)
+        self.block_4 = self.make_block(1024, 2048, n_layers[3], 2)
 
-        self.out_layer = nn.Sequential(
-            nn.Linear(out_channels, 512),
-            nn.LeakyReLU(),
-            nn.Dropout(0.4),
-            nn.Linear(512, out_d),
-        )
+        self.out_layer = nn.Linear(2048, n_classes)
+
+    def make_block(self, in_d, out_d, n_layers, stride):
+        '''
+        Creates one downsample block (stride 2)
+        And the rest are plain resblocks
+        '''
+        self.layers = nn.ModuleList()
+        self.layers.append(ResidualBlock2d(in_d, out_d//4, out_d, stride, downsample=True))
+        for i in range(n_layers-1):
+            self.layers.append(ResidualBlock2d(out_d, out_d//4, out_d, 1, downsample=False))
+        return nn.Sequential(*self.layers)
+
     def forward(self, x):
         x = self.in_layer(x)
-        for block in self.blocks:
-            x = block(x)
+        x = self.block_1(x)
+        x = self.block_2(x)
+        x = self.block_3(x)
+        x = self.block_4(x)
         x = F.avg_pool2d(x, x.shape[2])
-        x = x.squeeze(-1).squeeze(-1)
+        x = torch.flatten(x, 1)
         x = self.out_layer(x)
         return x
