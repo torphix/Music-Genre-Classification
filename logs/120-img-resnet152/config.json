@@ -1,0 +1,1 @@
+{"model_parameters": 58243082, "architechture": "resnet152", "epochs": 120, "batch_size": 32, "test_acc": 73.26388549804688}

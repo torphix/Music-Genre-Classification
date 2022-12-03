@@ -206,7 +206,7 @@ class MultiModalDataset(Dataset):
         for d in data:
             images.append(d['image'])
             targets.append(d['target'])
-            audio.append(d['audio'])
+            # audio.append(d['audio'])
             # Mel
             d['mel'] = d['mel'][:,:1293] # Crop to 30s
             if d['mel'].shape[1] < 1293:
@@ -217,7 +217,7 @@ class MultiModalDataset(Dataset):
             'targets': torch.stack(targets),
             'inputs': {
                 'images':torch.stack(images).float(),
-                'audio':torch.stack(audio).float(),
+                # 'audio':torch.stack(audio).float(),
                 'mels':torch.stack(mels),
                 }
         }

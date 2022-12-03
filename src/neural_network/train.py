@@ -46,9 +46,9 @@ class Trainer:
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config['optim']['learning_rate'])
         self.scheduler = ReduceLROnPlateau(self.optimizer, **self.config['scheduler'])
         logging.info(f'Starting training for: {self.config["epochs"]} epochs')
-        logging.info(f'Number of parameters: {self.count_parameters()/1_000_000}M, {round(self.get_model_size(self.model), 2)}: MiB')
-        self.metrics_table = PrettyTable(['Train Loss', 'Val Loss', 'Val Acc', 'LR'])
-        self.metrics_table.add_row([0.0,0.0,0.0,self.get_lr()])
+        logging.info(f'Number of parameters: {round(self.count_parameters()/1_000_000, 2)} M, {round(self.get_model_size(self.model), 2)}: MiB')
+        self.metrics_table = PrettyTable(['Epoch', 'Train Loss', 'Train Acc', 'Val Loss', 'Val Acc', 'LR'])
+        self.metrics_table.add_row([0.0,0.0,0.0,0.0,0.0,self.get_lr()])
         print(self.metrics_table)
 
     def __call__(self):
@@ -63,7 +63,9 @@ class Trainer:
             train_loss, train_acc = self.train_iter(e)
             train_metrics['loss'].append(train_loss.detach().cpu())
             train_metrics['acc'].append(train_acc.detach().cpu())
-            self.log_metrics(train_loss, val_loss, val_acc, self.get_lr())
+            # Reduce LR & Log
+            self.scheduler.step(val_acc)
+            self.log_metrics(e+1, train_loss, train_acc, val_loss, val_acc, self.get_lr())
         # Test
         final_test_loss, final_test_acc = self.eval_iter(self.test_dl)
         logging.info(f'Testset Accuracy: {final_test_acc}')
@@ -98,7 +100,6 @@ class Trainer:
             running_acc += self.calc_accuracy(outputs, targets)
         train_acc = running_acc / len(self.train_dl)
         train_loss = running_loss / (self.train_dl.__len__())
-        self.scheduler.step(train_acc)
         return train_loss, train_acc
 
     def eval_iter(self, dataloader):
@@ -143,11 +144,14 @@ class Trainer:
     def init_metrics_dict(self, metrics=['loss','acc']):
         return {metric: [] for metric in metrics}
 
-    def log_metrics(self, train_loss, val_loss, val_acc, lr):
-        self.metrics_table.add_row([round(train_loss.detach().item(), 5), 
-                                    round(val_loss.detach().item(), 5), 
-                                    f'{round(val_acc.detach().item(), 2)}%', 
-                                    round(self.get_lr(), 8)])
+    def log_metrics(self, epoch, train_loss, train_acc, val_loss, val_acc, lr):
+        self.metrics_table.add_row([
+            epoch,
+            round(train_loss.detach().item(), 5), 
+            f'{round(train_acc.detach().item(), 2)}%', 
+            round(val_loss.detach().item(), 5), 
+            f'{round(val_acc.detach().item(), 2)}%', 
+            round(lr, 8)])
         print( "\n".join(self.metrics_table.get_string().splitlines()[-2:])) # Print only new row
 
 
@@ -160,12 +164,14 @@ class Trainer:
             n_layers = [3, 4, 6, 3]
         elif architechture == 'resnet101':
             n_layers = [3, 4, 23, 3]
+        elif architechture == 'resnet152':
+            n_layers = [3, 8, 36, 3]
         if data_type == 'audio' or data_type == 'mel':
             model = ResNet1d(in_d=in_d, n_layers=n_layers, n_classes=10)
         elif data_type == 'img':
             model = ResNet2d(in_d=in_d, n_layers=n_layers, n_classes=10)
         elif data_type == 'multi_modal':
-            model = MultiModalNet()
+            model = MultiModalNet(n_layers)
         if load_trained_model != '' and load_trained_model != None:
             model.load_state_dict(torch.load(load_trained_model))
         return model
