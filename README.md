@@ -25,3 +25,5 @@
 <!-- PICK UP POINT -->
 1) RESNET implementation downsampling of channels == faster convergance?
 2) Get model implementation working
+
+https://docs.google.com/document/d/1xZQS3sEFVKBHdpISer60IRbo4kMMk0RUGAqCqW_4vZ8/edit?usp=sharing
