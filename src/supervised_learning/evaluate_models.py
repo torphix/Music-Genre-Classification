@@ -2,12 +2,13 @@ import pathlib
 from src.supervised_learning.supervised_learning import *
 
 
-def evaluate_models(path_to_data):
+def evaluate_models(path_to_data, print_results=True):
+    '''
+    Fits various models and tests on validation set
+    '''
 
     metrics = {}
-    for c in ['gini', 'entropy']:
-        metrics[f'decision_tree_{c}'] = decision_tree_classifier(path_to_data, **{'criterion': c})
-
+    metrics['decision_tree'] = decision_tree_classifier(path_to_data)
     metrics['logistic_regression'] = logistic_regression_classifier(path_to_data)
     metrics['svm'] = svm_classifier(path_to_data)
 
@@ -18,12 +19,16 @@ def evaluate_models(path_to_data):
         metrics[f'random_forest_{c}'] = random_forest_classifier(path_to_data, **{'criterion': c})
 
     metrics['naive_bayes'] = naive_bayes_classifier(path_to_data)
+    metrics['gaussian mixture'] = gaussian_mixture_classifier(path_to_data)
 
-    for key, val in metrics.items():
-        acc = val['accuracy']
-        prec = val['precision']
-        print(f'{key} accuracy: {acc:.3f}, precision: {prec:.3f}')
+    if print_results:
+        for key, val in metrics.items():
+            acc = val['accuracy']
+            prec = val['precision']
+            print(f'{key} accuracy: {acc:.3f}, precision: {prec:.3f}')
+
+    return metrics
 
 
-path = pathlib.Path(__file__).parent.parent
-evaluate_models('../../data/train_test_val_split')
+path = pathlib.Path(__file__).parent.parent.parent
+evaluate_models(f'{path}/data/train_test_val_split')

@@ -63,6 +63,8 @@ class Preprocessor:
         # Scaling features
         numerical_features = df.select_dtypes(np.number).columns
         df[numerical_features] = StandardScaler().fit_transform(df[numerical_features])
+        # Clamping
+        df[numerical_features] = df[numerical_features].clip(lower=-5, upper=+5)
         # Saving
         # df.to_csv(f'{self.data_path}/features_30_sec_scaled.csv', index=False)
         return df.copy()
