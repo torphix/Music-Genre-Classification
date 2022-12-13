@@ -21,7 +21,6 @@ from src.frontend.utils.overview_tab import (
     OVERVIEW_DESCRIPTION,
     LINKS_AND_REFERENCES,
 )
-from src.models.neural_network.train import Trainer
 
 
 def overview_tab_ui():
