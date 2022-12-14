@@ -12,18 +12,31 @@ from prettytable import PrettyTable
 from .resnet import ResNet1d, ResNet2d
 from torch.utils.data import DataLoader
 from .multi_modal_net import MultiModalNet
+from sklearn.metrics import confusion_matrix
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from sklearn.metrics import multilabel_confusion_matrix
 
 
 class Trainer:
-    def __init__(self):
+    def __init__(self, config_path):
         # lt.monkey_patch()
-        with open('config.yaml', 'r') as f:
+        with open(config_path, 'r') as f:
             self.config = yaml.load(f.read(), Loader=yaml.FullLoader)['neural_network']
             
         assert self.config['data_type'] in ['img', 'mel', 'audio', 'multi_modal'], \
             f'data_type: {self.config["data_type"]} not in available options'
+
+        self.genre_dict = {
+            'blues':0,
+            'classical':1,
+            'country':2,
+            'disco':3,
+            'hiphop':4,
+            'jazz':5,
+            'metal':6,
+            'pop':7,
+            'reggae':8,
+            'rock':9
+        }
 
         torch.manual_seed(self.config['seed'])
         # Paramters
@@ -67,7 +80,7 @@ class Trainer:
             self.scheduler.step(val_acc)
             self.log_metrics(e+1, train_loss, train_acc, val_loss, val_acc, self.get_lr())
         # Test
-        final_test_loss, final_test_acc = self.eval_iter(self.test_dl, True)
+        final_test_loss, final_test_acc, cf_matrix = self.eval_iter(self.test_dl, True)
         logging.info(f'Testset Accuracy: {final_test_acc}')
         # Save training run
         folder_name = f'{e+1}-{self.config["data_type"]}-{self.config["architechture"]}'
@@ -81,7 +94,8 @@ class Trainer:
                 'architechture': self.config['architechture'],
                 'epochs': e+1,
                 'batch_size': self.config['batch_size'],
-                'test_acc':final_test_acc.detach().cpu().item()
+                'test_acc':final_test_acc.detach().cpu().item(),
+                'cf_matrix':cf_matrix.tolist(),
             }))   
 
     def train_iter(self, epoch):
@@ -118,12 +132,12 @@ class Trainer:
         eval_loss /= dataloader.__len__()
         eval_acc /= len(dataloader)
         if plot_confusion:
-
-            outputs = torch.cat(outputs).flatten().detach().cpu().numpy()
-            targets = torch.cat(targets).flatten().detach().cpu().numpy()
-            cf_matrix = multilabel_confusion_matrix(targets, outputs)
-            print(cf_matrix)
-        return eval_loss, eval_acc
+            outputs = torch.cat(outputs).flatten().detach().cpu().tolist().map(lambda x: self.genre_dict[x])
+            targets = torch.cat(targets).flatten().detach().cpu().tolist().map(lambda x: self.genre_dict[x])
+            cf_matrix = confusion_matrix(targets, outputs, labels=list(self.genre_dict.keys()))
+            return eval_loss, eval_acc, cf_matrix
+        else:
+            return eval_loss, eval_acc
 
     def calc_accuracy(self, outputs, targets):
         # Accuracy
