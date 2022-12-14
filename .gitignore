@@ -4,3 +4,4 @@ mel_specs/
 .DS_Store
 *.ckpt
 logs/
+sb.py
