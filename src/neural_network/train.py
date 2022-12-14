@@ -26,16 +26,16 @@ class Trainer:
             f'data_type: {self.config["data_type"]} not in available options'
 
         self.genre_dict = {
-            'blues':0,
-            'classical':1,
-            'country':2,
-            'disco':3,
-            'hiphop':4,
-            'jazz':5,
-            'metal':6,
-            'pop':7,
-            'reggae':8,
-            'rock':9
+            0:'blues',
+            1:'classical',
+            2:'country',
+            3:'disco',
+            4:'hiphop',
+            5:'jazz',
+            6:'metal',
+            7:'pop',
+            8:'reggae',
+            9:'rock',
         }
 
         torch.manual_seed(self.config['seed'])
@@ -132,9 +132,9 @@ class Trainer:
         eval_loss /= dataloader.__len__()
         eval_acc /= len(dataloader)
         if plot_confusion:
-            outputs = torch.cat(outputs).flatten().detach().cpu().tolist().map(lambda x: self.genre_dict[x])
-            targets = torch.cat(targets).flatten().detach().cpu().tolist().map(lambda x: self.genre_dict[x])
-            cf_matrix = confusion_matrix(targets, outputs, labels=list(self.genre_dict.keys()))
+            outputs = [self.genre_dict[x] for x in torch.cat(outputs).flatten().detach().cpu().tolist()]
+            targets = [self.genre_dict[x] for x in torch.cat(targets).flatten().detach().cpu().tolist()]
+            cf_matrix = confusion_matrix(targets, outputs, labels=list(self.genre_dict.values()))
             return eval_loss, eval_acc, cf_matrix
         else:
             return eval_loss, eval_acc

@@ -32,15 +32,25 @@ def model_size_difference_acc_plot():
 
 
 def plot_confusion_matrix(cf_matrix):
+    labels = ['blues', 'classical', 'country', 'disco','hiphop','jazz','metal','pop','reggae','rock']
     df_cm = pd.DataFrame(cf_matrix, 
-                        index = [i for i in "ABCDEFGHIJK"],
-                        columns = [i for i in "ABCDEFGHIJK"])
+                        index = labels,
+                        columns = labels)
     plt.figure(figsize = (10,7))
     sns.heatmap(df_cm, annot=True)
+    plt.show()
 
 
-
-x = plot_confusion_matrix(
-    [[7, 0, 0, 0, 0, 1, 0, 0, 1, 0], [0, 7, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 2, 0, 0, 0, 0, 0, 0, 1], [0, 0, 2, 3, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 1, 0, 0, 1, 0, 0], [1, 0, 0, 2, 0, 2, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 5, 0, 0, 0], [0, 0, 1, 0, 0, 0, 0, 5, 0, 1], [1, 0, 1, 1, 0, 0, 0, 0, 3, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]]
-)
+# x = plot_confusion_matrix(
+# [[8, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+#  [0, 6, 1, 0, 0, 0, 0, 0, 0, 0],
+#  [0, 0, 2, 1, 0, 0, 0, 0, 0, 0],
+#  [0, 0, 0, 3, 0, 0, 0, 0, 0, 2],
+#  [0, 0, 0, 0, 1, 0, 0, 1, 0, 0],
+#  [1, 0, 1, 0, 0, 2, 0, 0, 1, 0],
+#  [0, 0, 0, 0, 0, 0, 5, 0, 0, 0],
+#  [0, 0, 2, 0, 0, 0, 0, 4, 0, 1],
+#  [0, 0, 2, 0, 0, 0, 0, 0, 4, 0],
+#  [0, 0, 0, 0, 0, 0, 0, 0, 0, 1],]
+# )
 # print(x)
