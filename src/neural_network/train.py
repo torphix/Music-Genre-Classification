@@ -12,18 +12,31 @@ from prettytable import PrettyTable
 from .resnet import ResNet1d, ResNet2d
 from torch.utils.data import DataLoader
 from .multi_modal_net import MultiModalNet
+from sklearn.metrics import confusion_matrix
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 
-
 class Trainer:
-    def __init__(self):
+    def __init__(self, config_path):
         # lt.monkey_patch()
-        with open('config.yaml', 'r') as f:
+        with open(config_path, 'r') as f:
             self.config = yaml.load(f.read(), Loader=yaml.FullLoader)['neural_network']
             
         assert self.config['data_type'] in ['img', 'mel', 'audio', 'multi_modal'], \
             f'data_type: {self.config["data_type"]} not in available options'
+
+        self.genre_dict = {
+            'blues':0,
+            'classical':1,
+            'country':2,
+            'disco':3,
+            'hiphop':4,
+            'jazz':5,
+            'metal':6,
+            'pop':7,
+            'reggae':8,
+            'rock':9
+        }
 
         torch.manual_seed(self.config['seed'])
         # Paramters
@@ -67,7 +80,7 @@ class Trainer:
             self.scheduler.step(val_acc)
             self.log_metrics(e+1, train_loss, train_acc, val_loss, val_acc, self.get_lr())
         # Test
-        final_test_loss, final_test_acc = self.eval_iter(self.test_dl)
+        final_test_loss, final_test_acc, cf_matrix = self.eval_iter(self.test_dl, True)
         logging.info(f'Testset Accuracy: {final_test_acc}')
         # Save training run
         folder_name = f'{e+1}-{self.config["data_type"]}-{self.config["architechture"]}'
@@ -81,7 +94,8 @@ class Trainer:
                 'architechture': self.config['architechture'],
                 'epochs': e+1,
                 'batch_size': self.config['batch_size'],
-                'test_acc':final_test_acc.detach().cpu().item()
+                'test_acc':final_test_acc.detach().cpu().item(),
+                'cf_matrix':cf_matrix.tolist(),
             }))   
 
     def train_iter(self, epoch):
@@ -102,19 +116,31 @@ class Trainer:
         train_loss = running_loss / (self.train_dl.__len__())
         return train_loss, train_acc
 
-    def eval_iter(self, dataloader):
+    def eval_iter(self, dataloader, plot_confusion=False):
         eval_loss, eval_acc = 0, 0
+        outputs, targets = [],[]
         with torch.no_grad():
             for data in dataloader:
-                inputs, targets = self.to_device(data)
-                outputs = self.model(inputs)
-                eval_loss += self.criterion(outputs, targets)
-                eval_acc += self.calc_accuracy(outputs, targets)
+                x, y = self.to_device(data)
+                y_pred = self.model(x)
+                eval_loss += self.criterion(y_pred, y)
+                eval_acc += self.calc_accuracy(y_pred, y)
+                if plot_confusion:
+                    outputs.append(torch.max(y_pred, dim=1)[1])
+                    targets.append(y)
+        
         eval_loss /= dataloader.__len__()
         eval_acc /= len(dataloader)
-        return eval_loss, eval_acc
+        if plot_confusion:
+            outputs = torch.cat(outputs).flatten().detach().cpu().tolist().map(lambda x: self.genre_dict[x])
+            targets = torch.cat(targets).flatten().detach().cpu().tolist().map(lambda x: self.genre_dict[x])
+            cf_matrix = confusion_matrix(targets, outputs, labels=list(self.genre_dict.keys()))
+            return eval_loss, eval_acc, cf_matrix
+        else:
+            return eval_loss, eval_acc
 
     def calc_accuracy(self, outputs, targets):
+        # Accuracy
         _, outputs = torch.max(outputs, dim=1)
         correct_vals = torch.sum(outputs == targets)
         total_vals = outputs.shape[0]
@@ -160,7 +186,9 @@ class Trainer:
             return param_group['lr']
 
     def load_model(self, data_type, in_d, architechture, load_trained_model=''):
-        if architechture == 'resnet50':
+        if architechture == 'resnet18':
+            n_layers = [2, 2, 2, 2]
+        elif architechture == 'resnet50':
             n_layers = [3, 4, 6, 3]
         elif architechture == 'resnet101':
             n_layers = [3, 4, 23, 3]
