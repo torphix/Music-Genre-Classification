@@ -1,19 +1,22 @@
 neural_network:
-  architechture: resnet # resnet or 
+  architechture: resnet18 # resnet50 resnet101
   data_type: multi_modal # img or audio or mel or multi_modal
   use_n_seconds: 3
-  batch_size: 16
+  batch_size: 8
   val_split_size: 0.02 # 5%
   val_check_n_epochs: 1
-  epochs: 50
+  epochs: 35
   log_step: 50
   seed: 42
-  n_blocks: 4 # Number of blocks to use in resnet
+  load_trained_model: 
 
   optim:
     learning_rate: 1.05e-3
     momentum: 0.9
+    
   scheduler:
-    gamma: 0.95
-    min_lr: 1.0e-4
-    step_size: 5
+    mode: 'max'
+    factor: 0.5
+    patience: 3
+    cooldown: 3
+    min_lr: 5.0e-7

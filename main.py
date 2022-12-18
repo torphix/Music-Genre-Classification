@@ -1,5 +1,7 @@
+import os
 import sys
 import argparse
+from tqdm import tqdm
 from streamlit.web import cli as stcli
 from src.preprocessing import Preprocessor
 from src.neural_network.train import Trainer as ResnetTrainer
@@ -14,12 +16,17 @@ if __name__ == '__main__':
         # processor.extract_mel_spectrogram()
 
     elif command == 'train':
-        # parser.add_argument('-m', '--model', required=True, choices=['resnet'])
-        # args, lf_args = parser.parse_known_args()
+        print(f'Found: {len(os.listdir("configs"))} configs starting runs')
+        i = 1
+        for i, config in enumerate(tqdm(os.listdir('configs'), f'Experiment: {i}', leave=False)):
+            trainer = ResnetTrainer(f'./configs/{config}')
+            trainer()
 
-        # if args.model == 'resnet':
-        trainer = ResnetTrainer()
-        trainer()
+
+    elif command == 'pretrained_logs':
+        trainer = ResnetTrainer('./config.yaml')
+        _, test_acc, test_cf = trainer.eval_iter(trainer.test_dl, True)
+        print(test_cf)
 
     elif command == 'ui':
         sys.argv = ["streamlit", "run", "src/frontend/frontend.py"]

@@ -74,12 +74,16 @@ class Preprocessor:
         enc = LabelEncoder()
         audio_files = [file for genre in os.listdir(f'{self.data_path}/genres_original') 
                        for file in os.listdir(f'{self.data_path}/genres_original/{genre}')]
-        # X = df.select_dtypes(np.number) # Need to keep labels for neural network file selection
+        df = df.sample(frac=1).reset_index(drop=True)
         X = df.loc[:, df.columns != 'label']
         X = df[df['filename'].isin(audio_files)]
         y = enc.fit_transform(X['label'])
-        X_, X_test, y_, y_test = train_test_split(X, y, train_size=0.95, random_state=42)
-        X_train, X_val, y_train, y_val = train_test_split(X_, y_, train_size=0.95, random_state=101)
+        X_train, X_val, y_train, y_val = train_test_split(X, y, train_size=0.9, random_state=42, stratify=X['label'])
+        print(len(X_train), len(X_val), len(y_train), len(y_val))
+        X_val, X_test, y_val, y_test = train_test_split(X_val, y_val, train_size=0.5, random_state=101, stratify=X_val['label'])
+        print('Label Proportions Train:', X_train['label'].value_counts())
+        print('Label Proportions Val:', X_val['label'].value_counts())
+        print('Label Proportions Test:', X_test['label'].value_counts())
         os.makedirs(f'{self.data_path}/train_test_val_split', exist_ok=True)
         for fname, f in {'X_train': X_train, 'X_val': X_val, 'X_test': X_test, 'y_train': y_train, 'y_val': y_val, 'y_test': y_test}.items():
             f = pd.DataFrame(f)
