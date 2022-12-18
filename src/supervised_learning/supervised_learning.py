@@ -1,5 +1,6 @@
 import pickle
 import pandas as pd
+import numpy as np
 from sklearn.metrics import accuracy_score, confusion_matrix, precision_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
@@ -7,29 +8,33 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
+from sklearn.mixture import GaussianMixture
 
 
 def compute_metrics(y_test, y_pred, path_to_folder):
     """
+    Computes accuracy, precision, confusion matrix.
     path_to_folder: path to folder containing data
     """
     with open(f'{path_to_folder}/label_encoder.pickle', 'rb') as f:
         enc = pickle.load(f)
     labels = enc.classes_
-    cm = pd.DataFrame(confusion_matrix(y_test, y_pred, normalize='true'), columns=labels, index=labels)
+    cm = pd.DataFrame(confusion_matrix(np.array(y_test), y_pred, normalize='true'), columns=labels, index=labels)
     accuracy = accuracy_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred, average='macro')
+    precision = precision_score(y_test, y_pred, average='macro', zero_division=0)
     return {'accuracy': accuracy, 'precision': precision, 'confusion_matrix': cm}
+    # return {'accuracy': accuracy, 'precision': precision}
 
 
 def load_train_val(path_to_folder):
     """
+    Loads train and validation set
     path_to_folder: path to folder containing data
     """
-    X_train = pd.read_csv(f'{path_to_folder}/X_train.csv')
-    X_val = pd.read_csv(f'{path_to_folder}/X_val.csv')
-    y_train = pd.read_csv(f'{path_to_folder}/y_train.csv')
-    y_val = pd.read_csv(f'{path_to_folder}/y_val.csv')
+    X_train = pd.read_csv(f'{path_to_folder}/X_train.csv').select_dtypes(np.number)
+    X_val = pd.read_csv(f'{path_to_folder}/X_val.csv').select_dtypes(np.number)
+    y_train = np.ravel(pd.read_csv(f'{path_to_folder}/y_train.csv'))
+    y_val = np.ravel(pd.read_csv(f'{path_to_folder}/y_val.csv'))
 
     return X_train, X_val, y_train, y_val
 
@@ -77,6 +82,14 @@ def random_forest_classifier(path_to_data, **model_args):
 def naive_bayes_classifier(path_to_data, **model_args):
     X_train, X_val, y_train, y_val = load_train_val(path_to_data)
     classifier = GaussianNB(**model_args).fit(X_train, y_train)
+    pred_labels = classifier.predict(X_val)
+
+    return compute_metrics(y_val, pred_labels, path_to_data)
+
+
+def gaussian_mixture_classifier(path_to_data, **model_args):
+    X_train, X_val, y_train, y_val = load_train_val(path_to_data)
+    classifier = GaussianMixture(n_components = 10, **model_args).fit(X_train, y_train)
     pred_labels = classifier.predict(X_val)
 
     return compute_metrics(y_val, pred_labels, path_to_data)
