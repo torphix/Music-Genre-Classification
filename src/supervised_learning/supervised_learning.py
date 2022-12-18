@@ -19,7 +19,7 @@ def compute_metrics(y_test, y_pred, path_to_folder):
     with open(f'{path_to_folder}/label_encoder.pickle', 'rb') as f:
         enc = pickle.load(f)
     labels = enc.classes_
-    cm = pd.DataFrame(confusion_matrix(y_test, y_pred, normalize='true'), columns=labels, index=labels)
+    cm = pd.DataFrame(confusion_matrix(np.array(y_test), y_pred, normalize='true'), columns=labels, index=labels)
     accuracy = accuracy_score(y_test, y_pred)
     precision = precision_score(y_test, y_pred, average='macro', zero_division=0)
     recall = recall_score(y_test, y_pred, average='macro', zero_division=0)
@@ -91,7 +91,7 @@ def naive_bayes_classifier(path_to_data, **model_args):
 
 def gaussian_mixture_classifier(path_to_data, **model_args):
     X_train, X_val, y_train, y_val = load_train_val(path_to_data)
-    classifier = GaussianMixture(n_components=10, max_iter=300, **model_args).fit(X_train, y_train)
+    classifier = GaussianMixture(n_components = 10, **model_args).fit(X_train, y_train)
     pred_labels = classifier.predict(X_val)
 
     return compute_metrics(y_val, pred_labels, path_to_data)

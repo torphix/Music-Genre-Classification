@@ -25,9 +25,7 @@ def evaluate_models(path_to_data, print_results=True):
         for key, val in metrics.items():
             acc = val['accuracy']
             prec = val['precision']
-            rec = val['recall']
-            f1 = val['f1']
-            print(f'{key} accuracy: {acc:.3f}, precision: {prec:.3f}, recall: {rec:.3f}, f1: {f1:.3f}')
+            print(f'{key} accuracy: {acc:.3f}, precision: {prec:.3f}')
 
     return metrics
 
