@@ -136,7 +136,7 @@ class ImageDataset(Dataset):
         target = self.target_dict[genre]
         return {
             'target': torch.tensor(target),
-            'image':image,
+            'image':image[:3,:,:],
         }
 
     def collate_fn(self, data):

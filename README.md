@@ -7,11 +7,6 @@
 
 - run command ```python main.py train -m='resnet'``` modify config.yaml to configure the model hyperparamters
 
-## TODO
-1) Check accuracy metrics are correct val loss is behaving strangely
-2) Add more input features to neural network
-3) Get Increase accuracy of unsupervised clustering and present visualisations
-
 
 ## In report
 0) Some files where dropped due to corrputed audio
@@ -22,8 +17,5 @@
 
 
 
-<!-- PICK UP POINT -->
-1) RESNET implementation downsampling of channels == faster convergance?
-2) Get model implementation working
-
-https://docs.google.com/document/d/1xZQS3sEFVKBHdpISer60IRbo4kMMk0RUGAqCqW_4vZ8/edit?usp=sharing
+## TODO 
+- Add all cmd line apis

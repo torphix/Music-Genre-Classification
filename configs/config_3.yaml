@@ -1,17 +1,18 @@
 neural_network:
-  architechture: resnet18 # resnet50 resnet101
-  data_type: audio # img or audio or mel or multi_modal
+  architechture: resnet18 # resnet50 resnet101 
+  data_type: img # img or audio or mel or multi_modal
   use_n_seconds: 3
   batch_size: 8
   val_split_size: 0.02 # 5%
   val_check_n_epochs: 1
-  epochs: 35
+  epochs: 50
   log_step: 50
   seed: 42
   load_trained_model: 
+  finetune: False
 
   optim:
-    learning_rate: 1.05e-3
+    learning_rate: 1.05e-4
     momentum: 0.9
     
   scheduler:
