@@ -12,8 +12,9 @@ from prettytable import PrettyTable
 from .resnet import ResNet1d, ResNet2d
 from torch.utils.data import DataLoader
 from .multi_modal_net import MultiModalNet
-from sklearn.metrics import confusion_matrix
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torchvision.models import resnet50 as pretrained_resnet50
+from sklearn.metrics import confusion_matrix, precision_score, recall_score
 
 
 class Trainer:
@@ -43,7 +44,7 @@ class Trainer:
         self.epochs = self.config['epochs']
         self.log_step = self.config['log_step']
         self.val_check_n_epochs = self.config['val_check_n_epochs']
-
+        logging.info(f'Using config: {config_path}')
         logging.info('Recording training logs to directory: logs/')
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         # Load and split data
@@ -52,9 +53,12 @@ class Trainer:
                                                                           self.config['batch_size'],
                                                                           self.config['use_n_seconds'])
         logging.info('Loading Model..')
-        self.model = self.load_model(self.config['data_type'], in_d, 
-                                    self.config['architechture'], 
-                                    self.config['load_trained_model']).to(self.device)
+        if self.config['finetune']:
+            self.model = pretrained_resnet50('IMAGENET1K_V2').to(self.device)
+        else:
+            self.model = self.load_model(self.config['data_type'], in_d, 
+                                        self.config['architechture'], 
+                                        self.config['load_trained_model']).to(self.device)
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config['optim']['learning_rate'])
         self.scheduler = ReduceLROnPlateau(self.optimizer, **self.config['scheduler'])
@@ -65,44 +69,41 @@ class Trainer:
         print(self.metrics_table)
 
     def __call__(self):
-        train_metrics = self.init_metrics_dict()
-        val_metrics = self.init_metrics_dict()
+        running_train_metrics = self._init_metrics_dict()
+        running_val_metrics = self._init_metrics_dict()
         for e in range(self.epochs):
             # Validation
-            val_loss, val_acc = self.eval_iter(self.val_dl)
-            val_metrics['loss'].append(val_loss.cpu())
-            val_metrics['acc'].append(val_acc.cpu())
+            val_metrics = self.eval_iter(self.val_dl)
+            running_val_metrics = self._add_metrics(val_metrics, running_val_metrics)
             # Train 
-            train_loss, train_acc = self.train_iter(e)
-            train_metrics['loss'].append(train_loss.detach().cpu())
-            train_metrics['acc'].append(train_acc.detach().cpu())
-            # Reduce LR & Log
-            self.scheduler.step(val_acc)
-            self.log_metrics(e+1, train_loss, train_acc, val_loss, val_acc, self.get_lr())
+            train_metrics = self.train_iter(e)
+            running_train_metrics = self._add_metrics(train_metrics, running_train_metrics)
+            # Reduce LR & Log Using last val_acc
+            self.scheduler.step(running_val_metrics['acc'][-1])
+            self._log_metrics(e+1, running_train_metrics, running_val_metrics, self.get_lr())
         # Test
-        final_test_loss, final_test_acc, cf_matrix = self.eval_iter(self.test_dl, True)
-        logging.info(f'Testset Accuracy: {final_test_acc}')
+        testset_metrics = self.eval_iter(self.test_dl, True)
+        logging.info(f'Testset Accuracy: {testset_metrics["acc"]}')
         # Save training run
         folder_name = f'{e+1}-{self.config["data_type"]}-{self.config["architechture"]}'
         os.makedirs(f'logs/{folder_name}', exist_ok=True)
         torch.save(self.model.state_dict(), f'logs/{folder_name}/model.ckpt')
-        torch.save(train_metrics, f'logs/{folder_name}/train_metrics.pt')
-        torch.save(val_metrics, f'logs/{folder_name}/val_metrics.pt')
+        torch.save(running_train_metrics, f'logs/{folder_name}/train_metrics.pt')
+        torch.save(running_val_metrics, f'logs/{folder_name}/val_metrics.pt')
         with open(f'logs/{folder_name}/config.json', 'w') as f:
             f.write(json.dumps({
                 'model_parameters': self.count_parameters(),
                 'architechture': self.config['architechture'],
                 'epochs': e+1,
                 'batch_size': self.config['batch_size'],
-                'test_acc':final_test_acc.detach().cpu().item(),
-                'cf_matrix':cf_matrix.tolist(),
+                'testset_metrics':testset_metrics,
             }))   
 
     def train_iter(self, epoch):
         train_progress_bar = tqdm(self.train_dl, 
                                   f'Epoch: {epoch}/{self.epochs}', 
                                   leave=False)
-        running_loss, running_acc = 0, 0
+        metrics = {'loss':0, 'acc':0, 'precision':0, 'recall':0}
         for i, data in enumerate(train_progress_bar):
             inputs, targets = self.to_device(data)
             self.optimizer.zero_grad()
@@ -110,41 +111,50 @@ class Trainer:
             loss = self.criterion(outputs, targets)
             loss.backward()
             self.optimizer.step()
-            running_loss += loss
-            running_acc += self.calc_accuracy(outputs, targets)
-        train_acc = running_acc / len(self.train_dl)
-        train_loss = running_loss / (self.train_dl.__len__())
-        return train_loss, train_acc
+            metrics['loss'] += loss.item()
+            metrics = self.calc_metrics(outputs, targets, metrics)
+        metrics = self._normalise_metrics(metrics, len(self.train_dl))
+        return metrics
 
     def eval_iter(self, dataloader, plot_confusion=False):
-        eval_loss, eval_acc = 0, 0
+        metrics = {'loss':0, 'acc':0, 'precision':0, 'recall':0}
         outputs, targets = [],[]
         with torch.no_grad():
             for data in dataloader:
                 x, y = self.to_device(data)
                 y_pred = self.model(x)
-                eval_loss += self.criterion(y_pred, y)
-                eval_acc += self.calc_accuracy(y_pred, y)
+                metrics['loss'] += self.criterion(y_pred, y).item()
+                metrics = self.calc_metrics(y_pred, y, metrics)
                 if plot_confusion:
                     outputs.append(torch.max(y_pred, dim=1)[1])
                     targets.append(y)
-        
-        eval_loss /= dataloader.__len__()
-        eval_acc /= len(dataloader)
+        # Metrics
+        metrics = self._normalise_metrics(metrics, len(dataloader))
         if plot_confusion:
             outputs = [self.genre_dict[x] for x in torch.cat(outputs).flatten().detach().cpu().tolist()]
             targets = [self.genre_dict[x] for x in torch.cat(targets).flatten().detach().cpu().tolist()]
-            cf_matrix = confusion_matrix(targets, outputs, labels=list(self.genre_dict.values()))
-            return eval_loss, eval_acc, cf_matrix
+            metrics['cf_matrix'] = confusion_matrix(targets, outputs, labels=list(self.genre_dict.values())).tolist()
+            return metrics
         else:
-            return eval_loss, eval_acc
+            return metrics
 
-    def calc_accuracy(self, outputs, targets):
+    def calc_metrics(self, outputs, targets, metrics):
+        targets = targets.detach().cpu()
+        outputs = outputs.detach().cpu()
         # Accuracy
         _, outputs = torch.max(outputs, dim=1)
         correct_vals = torch.sum(outputs == targets)
         total_vals = outputs.shape[0]
-        return (correct_vals / total_vals) * 100
+        metrics['acc'] += ((correct_vals / total_vals) * 100).item()
+        metrics['precision'] += precision_score(targets, 
+                                                outputs, 
+                                                average='macro', 
+                                                zero_division=True)
+        metrics['recall'] += recall_score(targets, 
+                                          outputs, 
+                                          average='macro', 
+                                          zero_division=True)
+        return metrics
 
     def to_device(self, data):
         if isinstance(data['inputs'], dict):
@@ -167,20 +177,6 @@ class Trainer:
         size_all_mb = (param_size + buffer_size) / 1024**2
         return size_all_mb
 
-    def init_metrics_dict(self, metrics=['loss','acc']):
-        return {metric: [] for metric in metrics}
-
-    def log_metrics(self, epoch, train_loss, train_acc, val_loss, val_acc, lr):
-        self.metrics_table.add_row([
-            epoch,
-            round(train_loss.detach().item(), 5), 
-            f'{round(train_acc.detach().item(), 2)}%', 
-            round(val_loss.detach().item(), 5), 
-            f'{round(val_acc.detach().item(), 2)}%', 
-            round(lr, 8)])
-        print( "\n".join(self.metrics_table.get_string().splitlines()[-2:])) # Print only new row
-
-
     def get_lr(self):
         for param_group in self.optimizer.param_groups:
             return param_group['lr']
@@ -197,10 +193,36 @@ class Trainer:
         if data_type == 'audio' or data_type == 'mel':
             model = ResNet1d(in_d=in_d, n_layers=n_layers, n_classes=10)
         elif data_type == 'img':
-            model = ResNet2d(in_d=in_d, n_layers=n_layers, n_classes=10)
+            model = ResNet2d(in_d=3, n_layers=n_layers, n_classes=10)
         elif data_type == 'multi_modal':
             model = MultiModalNet(n_layers)
         if load_trained_model != '' and load_trained_model != None:
             model.load_state_dict(torch.load(load_trained_model))
         return model
 
+    def _normalise_metrics(self, metrics:dict, dataloader_len:int):
+        metrics['loss'] /= dataloader_len
+        metrics['acc'] /= dataloader_len
+        metrics['precision'] /= dataloader_len
+        metrics['recall'] /= dataloader_len
+        return metrics
+
+    def _add_metrics(self, metrics:dict, running_metrics:dict):
+        running_metrics['loss'].append(metrics['loss'])
+        running_metrics['acc'].append(metrics['acc'])
+        running_metrics['precision'].append(metrics['precision'])
+        running_metrics['recall'].append(metrics['recall'])
+        return running_metrics
+
+    def _init_metrics_dict(self, metrics=['loss','acc','precision','recall']):
+        return {metric: [] for metric in metrics}
+
+    def _log_metrics(self, epoch, running_train_metrics, running_val_metrics, lr):
+        self.metrics_table.add_row([
+            epoch,
+            round(running_train_metrics['loss'][-1], 5), 
+            f'{round(running_train_metrics["acc"][-1], 2)}%', 
+            round(running_val_metrics['loss'][-1], 5), 
+            f'{round(running_val_metrics["acc"][-1], 2)}%', 
+            round(lr, 8)])
+        print( "\n".join(self.metrics_table.get_string().splitlines()[-2:])) # Print only new row

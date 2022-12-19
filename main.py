@@ -17,11 +17,10 @@ if __name__ == '__main__':
 
     elif command == 'train':
         print(f'Found: {len(os.listdir("configs"))} configs starting runs')
-        i = 1
-        for i, config in enumerate(tqdm(os.listdir('configs'), f'Experiment: {i}', leave=False)):
+        i = 0
+        for i, config in enumerate(tqdm(os.listdir('configs'), f'Experiment: {i+1}', leave=False)):
             trainer = ResnetTrainer(f'./configs/{config}')
             trainer()
-
 
     elif command == 'pretrained_logs':
         trainer = ResnetTrainer('./config.yaml')
