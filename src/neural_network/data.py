@@ -12,7 +12,9 @@ class MelDataset(Dataset):
     def __init__(self, root_path, csv_path) -> None:
         super().__init__()
         self.root_path = root_path
-        self.df = pd.read_csv(csv_path)['filename']
+        df = pd.read_csv(csv_path)
+        self.labels = df['label']
+        self.fnames = df['filename']
 
         self.target_dict = {
             'blues':0,
@@ -28,13 +30,13 @@ class MelDataset(Dataset):
         }
 
     def __len__(self):
-        return len(self.df)
+        return len(self.fnames)
     
     def __getitem__(self, index):
-        fname =  self.df[index]
-        genre, index, _ = fname.split(".")
-        mel = torch.load(f'{self.root_path}/mel_specs/{genre}/{index}.pt') 
-        target = self.target_dict[genre]
+        fname = self.fnames[index]
+        label = self.labels[index]
+        mel = torch.load(f'{self.root_path}/mel_specs/{label}/{fname}') 
+        target = self.target_dict[label]
         return {
             'target': torch.tensor(target),
             'mel':mel,

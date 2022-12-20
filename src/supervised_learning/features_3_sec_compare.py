@@ -111,5 +111,5 @@ def fit_models():
     return acc_3_before_aggregation, metrics_3, metrics_30
 
 
-fit_models()
+
 

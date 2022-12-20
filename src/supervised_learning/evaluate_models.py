@@ -30,5 +30,5 @@ def evaluate_models(path_to_data, print_results=True):
     return metrics
 
 
-path = pathlib.Path(__file__).parent.parent.parent
-evaluate_models(f'{path}/data/train_test_val_split')
+# path = pathlib.Path(__file__).parent.parent.parent
+# evaluate_models(f'{path}/data/train_test_val_split')
