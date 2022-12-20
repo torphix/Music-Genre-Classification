@@ -133,7 +133,7 @@ def models_tab_ui():
         ], index=None))
     
     # Results
-    st.title('Results')
+    st.title('Neural Network Results')
     col1, col2 = st.columns([4,4])
     with col1:    
         labels = ['blues', 'classical', 'country', 'disco','hiphop','jazz','metal','pop','reggae','rock']
@@ -146,3 +146,13 @@ def models_tab_ui():
         st.text('Metrics')
         st.image('logs/highest_score/metrics.png', width=500)        
         
+
+    st.title('Machine Learning Results')
+    col1, col2 = st.columns([4,4])
+    with col1:   
+        st.text('SVM Confusion Matrix')
+        st.image('logs/highest_score/svm_confusion_matrix.png', width=400)   
+
+    with col2:
+        st.text('Summary of Classical ML Techniques used')
+        st.image('logs/highest_score/summary_of_ml_techniques.png', width=400)   
