@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import cross_validate
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
-from supervised_learning import load_train_val
+from src.supervised_learning.supervised_learning import load_train_val
 
 
 def cross_validate_model(root_path, model, params=None):

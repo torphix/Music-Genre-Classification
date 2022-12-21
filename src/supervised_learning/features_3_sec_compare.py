@@ -87,28 +87,15 @@ def fit_models():
     pred_30 = svm_30.predict(X_30_test.select_dtypes(include=np.number))
     pred_3 = svm_3.predict(X_3_test.select_dtypes(include=np.number))
 
-    acc_3_before_aggregation = accuracy_score(y_3_test, pred_3)
+    metrics_3_before_aggregation = compute_metrics(y_3_test, pred_3, path)
 
     pred_3_by_track = pd.DataFrame(zip(X_3_test['fname'], pred_3), columns=['fname', 'pred']).groupby('fname', sort=False)
     pred_3 = pred_3_by_track.aggregate(func=lambda x: x.mode()[0])
 
-    # cm_3 = confusion_matrix(y_30_test, pred_3, normalize='true')
-    # cm_30 = confusion_matrix(y_30_test, pred_30, normalize='true')
-    #
-    # fig, ax = plt.subplots(2)
-    # sns.heatmap(cm_3, ax=ax[0], annot=True, square=True)
-    # sns.heatmap(cm_30, ax=ax[1], annot=True, square=True)
-    # print(pred_3, X_30_test['filename'])
-
     metrics_3 = compute_metrics(y_30_test, pred_3, path)
     metrics_30 = compute_metrics(y_30_test, pred_30, path)
 
-    # accuracy_by_class = pd.DataFrame(np.diag(cm_30) / np.sum(cm_30, axis=1), columns=)
-    # print(accuracy_by_class)
-    # plt.show()
-    # print(X_30_test['filename'], pred_3['fname'])
-
-    return acc_3_before_aggregation, metrics_3, metrics_30
+    return metrics_3_before_aggregation, metrics_3, metrics_30
 
 
 
