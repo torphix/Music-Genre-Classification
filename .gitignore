@@ -3,5 +3,5 @@ __pycache__/
 mel_specs/
 .DS_Store
 *.ckpt
-logs/
 sb.py
+genres_split/

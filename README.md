@@ -1,21 +1,15 @@
-## General guidelines when pushing updates
-0) Ensure to activate venv and download pip3 install -r requirements.txt
-1) If installing new packages remeber to pip freeze > requirements.txt after
+## Setup
+```
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
 ## Commands
-- run command ```python main.py ui``` to launch the UI providing a succincte overview of the project all of the following commands can be interacted with through the UI or manually through the command line
+- run command ```python main.py ui``` to launch the UI providing a succincte overview of the project.
 
-- run command ```python main.py train -m='resnet'``` modify config.yaml to configure the model hyperparamters
+- run command ```python main.py train_nn ``` looks into the configs directory and runs as many neural network training runs as there are config.yaml files
 
+- run command ```python main.py fit_classical_models``` to run the classical machine learning models
 
-## In report
-0) Some files where dropped due to corrputed audio
-1) Why used adam optimizer + (brief descriptor)
-2) Bugs faced:  
-    - Passed a tiny momentum value to optimizer essentially reducing the inertia of the optimizer steps to nill
-    - Was passing onehot class label encodings instead of the true indices to the loss function resulting in incorrect optimisation
-
-
-
-## TODO 
-- Add all cmd line apis
+- run command ```python main.py evaluate_classical_models``` to evaluate the classical machine learning models

@@ -1,10 +1,11 @@
 import os
+import json
 import torch
 import numpy as np
 import pandas as pd
 import librosa.display
 import streamlit as st
-import plotly.express as px
+import plotly.express as ptx
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from src.frontend.utils.data_tab import (
@@ -21,7 +22,7 @@ from src.frontend.utils.overview_tab import (
     OVERVIEW_DESCRIPTION,
     LINKS_AND_REFERENCES,
 )
-
+from src.visualisations import plot_confusion_matrix
 
 def overview_tab_ui():
     st.markdown('''
@@ -100,18 +101,58 @@ def models_tab_ui():
     # Overview
     st.markdown('<div style="text-align: center; font-size:40px; width:80%; margin:auto;"><b>Summary of Approach</b></div>', unsafe_allow_html=True)
     st.markdown(OVERVIEW_TEXT, unsafe_allow_html=True)
-    st.markdown('<div style="text-align: center; font-size:40px; width:80%; margin:auto;"><b>Training Summary</b></div>', unsafe_allow_html=True)
-    losses = torch.load('logs/60.losses', 'cpu')
+    st.markdown('<div style="text-align: center; font-size:40px; width:80%; margin:auto;"><b>Training Summary of Best Model</b></div>', unsafe_allow_html=True)
+    train_losses = torch.load('logs/highest_score/train_metrics.pt', 'cpu')
+    val_losses = torch.load('logs/highest_score/val_metrics.pt', 'cpu')
 
+    with open('logs/highest_score/config.json', 'r') as f:
+        model_config = json.loads(f.read())
+
+    # Losses
+    st.title('Training Losses')
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=list(losses['train_losses'].keys()), 
-                            y=list(losses['train_losses'].values()),
-                            mode='lines+markers',
-                            name='Train Loss'))
-    fig.add_trace(go.Scatter(x=list(losses['val_losses'].keys()), 
-                            y=list(losses['val_losses'].values()),
-                            mode='lines+markers',
-                            name='Validation Loss'))
-    st.plotly_chart(fig, use_container_width=True)
-    # trainer = Trainer()
+    fig.add_trace(
+        go.Scatter(x=[i for i in range(len(train_losses['loss']))], 
+                   y=train_losses['loss'],
+                   mode='lines+markers',
+                   name='Train Loss'))
+    fig.add_trace(
+        go.Scatter(x=[i for i in range(len(val_losses['loss']))], 
+                   y=val_losses['loss'],
+                   mode='lines+markers',
+                   name='Validation Loss'))
+    st.plotly_chart(fig, use_container_width=True, title='Loss')
 
+    # Hyperparamters
+    st.title('Model Hyperparameters')
+    st.table(pd.DataFrame([
+        ['Architecture',model_config['architechture']],
+        ['Parameters', model_config['model_parameters']],
+        ['Number of Epochs', model_config['epochs']],
+        ['Batch Size', model_config['batch_size']],
+        ], index=None))
+    
+    # Results
+    st.title('Neural Network Results')
+    col1, col2 = st.columns([4,4])
+    with col1:    
+        labels = ['blues', 'classical', 'country', 'disco','hiphop','jazz','metal','pop','reggae','rock']
+        df_cm = pd.DataFrame(model_config['testset_metrics']['cf_matrix'], 
+                            index = labels,
+                            columns = labels)
+        fig = ptx.imshow(df_cm/50, text_auto=True, title='Confusion Matrix (Percentages)')
+        st.plotly_chart(fig)
+    with col2:
+        st.text('Metrics')
+        st.image('logs/highest_score/metrics.png', width=500)        
+        
+
+    st.title('Machine Learning Results')
+    col1, col2 = st.columns([4,4])
+    with col1:   
+        st.text('SVM Confusion Matrix')
+        st.image('logs/highest_score/svm_confusion_matrix.png', width=400)   
+
+    with col2:
+        st.text('Summary of Classical ML Techniques used')
+        st.image('logs/highest_score/summary_of_ml_techniques.png', width=400)   

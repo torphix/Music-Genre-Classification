@@ -1,13 +1,15 @@
 import os
 import torch
-import pathlib
+import shutil
+import pickle
 import librosa
+import pathlib
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
+from scipy.io import wavfile
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from tqdm import tqdm
-import pickle
 
 
 class Preprocessor:
@@ -32,27 +34,47 @@ class Preprocessor:
         img = np.flip(img, axis=0) # put low frequencies at the bottom in image
         return 255-img
 
-    def initial_preprocessing(self):
-        pass
+    def split_audio(self):
+        '''
+        Split audio files into 3 second clips to increase training data quantity
+        '''
+        shutil.rmtree(f'{self.data_path}/genres_split/', ignore_errors=True)
+        for i, genre in enumerate(tqdm(os.listdir(f'{self.data_path}/genres_original'), 'Splitting audio')):
+            os.makedirs(f'{self.data_path}/genres_split/{genre}', exist_ok=True)
+            for file in os.listdir(f'{self.data_path}/genres_original/{genre}'):
+                wav, sr = librosa.load(f'{self.data_path}/genres_original/{genre}/{file}')
+                for idx,i in enumerate(range(0,30,3)):
+                    wavfile.write(f'{self.data_path}/genres_split/{genre}/{idx}_{file}', sr, wav[i*sr:(i+3)*sr])
 
     def extract_mel_spectrogram(self, progress_bar_callback=None):  
-        for i, genre in enumerate(tqdm(os.listdir(f'{self.data_path}/genres_original'), 'Extracting Mel Spectrograms')):
+        for i, genre in enumerate(tqdm(os.listdir(f'{self.data_path}/genres_split'), 'Extracting Mel Spectrograms')):
             if progress_bar_callback is not None:
                 progress_bar_callback.progress(i*10)
             os.makedirs(f'{self.data_path}/mel_specs/{genre}', exist_ok=True)
-            for file in os.listdir(f'{self.data_path}/genres_original/{genre}'):
+            for file in os.listdir(f'{self.data_path}/genres_split/{genre}'):
                 try:
-                    wav, sr = librosa.load(f'{self.data_path}/genres_original/{genre}/{file}')
+                    wav, sr = librosa.load(f'{self.data_path}/genres_split/{genre}/{file}')
                     wav = wav / np.max(wav)
                 except:
                     # Corrupted wav file
-                    os.remove(f'{self.data_path}/genres_original/{genre}/{file}')
+                    os.remove(f'{self.data_path}/genres_split/{genre}/{file}')
                 mel_spec = librosa.feature.melspectrogram(y=wav, sr=sr)
                 mel_spec = torch.tensor(mel_spec)
                 # Normalise mel
                 mel_spec = torch.log(torch.clamp(mel_spec, min=1e-5))
-                torch.save(mel_spec[:,:1293], f'{self.data_path}/mel_specs/{genre}/{file.split(".")[1]}.pt')
+                torch.save(mel_spec[:,:130], f'{self.data_path}/mel_specs/{genre}/{".".join(file.split(".")[0:2])}.pt')
 
+    def create_genre_df(self):
+        output_files, genre = [], []
+        for folder in os.listdir('data/mel_specs'):
+            for file in os.listdir(f'data/mel_specs/{folder}'):
+                output_files.append(file)
+                genre.append(folder)
+        df = pd.DataFrame({
+            'filename':output_files,
+            'label':genre
+        })
+        df.to_csv(f'data/split_audio_file.csv')
 
     def scale_features(self):
         # Substituting variance with standard deviation
@@ -79,7 +101,6 @@ class Preprocessor:
         X = df[df['filename'].isin(audio_files)]
         y = enc.fit_transform(X['label'])
         X_train, X_val, y_train, y_val = train_test_split(X, y, train_size=0.9, random_state=42, stratify=X['label'])
-        print(len(X_train), len(X_val), len(y_train), len(y_val))
         X_val, X_test, y_val, y_test = train_test_split(X_val, y_val, train_size=0.5, random_state=101, stratify=X_val['label'])
         print('Label Proportions Train:', X_train['label'].value_counts())
         print('Label Proportions Val:', X_val['label'].value_counts())
