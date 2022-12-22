@@ -24,8 +24,8 @@ if __name__ == '__main__':
 
     if command == 'process_data':
         processor = Preprocessor()
-        # processor.split_audio()
-        # processor.extract_mel_spectrogram()
+        processor.split_audio()
+        processor.extract_mel_spectrogram()
         processor.convert_mel_folder_to_img('data/mel_specs', 'data/images_split')
         # processor.scale_features()
         # processor.train_test_validation_split()

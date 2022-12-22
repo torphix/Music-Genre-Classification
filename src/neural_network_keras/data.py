@@ -14,7 +14,7 @@ def load_dataset(df_dir, batch_size):
     X_test_df = pd.read_csv(f"{df_dir}/X_test.csv")
     # Copy files into tempdir
     root_dir = pathlib.Path(__file__).parent.parent
-    shutil.rmtree('data/keras_dataset')
+    shutil.rmtree('data/keras_dataset', ignore_errors=True)
     for idx, row in X_train_df.iterrows():
         genre = row['label']
         fname = ".".join(row["filename"].split(".")[:-1])
