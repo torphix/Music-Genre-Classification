@@ -1,9 +1,13 @@
 import pathlib
 import numpy as np
 from sklearn.svm import SVC
+<<<<<<< HEAD
 from supervised_learning import load_train_val
 from sklearn.model_selection import cross_validate
 from sklearn.linear_model import LogisticRegression
+=======
+from src.supervised_learning.supervised_learning import load_train_val
+>>>>>>> 5fe03e9e26d368a207e0b90c2284d141bb3dacbc
 
 
 def cross_validate_model(root_path, model, params=None):

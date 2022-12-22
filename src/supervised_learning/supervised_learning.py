@@ -1,7 +1,7 @@
 import pickle
 import pandas as pd
 import numpy as np
-from sklearn.metrics import accuracy_score, confusion_matrix, precision_score
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
@@ -22,8 +22,10 @@ def compute_metrics(y_test, y_pred, path_to_folder):
     cm = pd.DataFrame(confusion_matrix(np.array(y_test), y_pred, normalize='true'), columns=labels, index=labels)
     accuracy = accuracy_score(y_test, y_pred)
     precision = precision_score(y_test, y_pred, average='macro', zero_division=0)
-    return {'accuracy': accuracy, 'precision': precision, 'confusion_matrix': cm}
-    # return {'accuracy': accuracy, 'precision': precision}
+    recall = recall_score(y_test, y_pred, average='macro', zero_division=0)
+    f1 = f1_score(y_test, y_pred, average='macro', zero_division=0)
+
+    return {'accuracy': accuracy, 'precision': precision, 'recall': recall, 'f1': f1, 'confusion_matrix': cm}
 
 
 def load_train_val(path_to_folder):
