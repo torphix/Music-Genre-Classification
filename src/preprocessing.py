@@ -107,7 +107,7 @@ class Preprocessor:
         X = df.loc[:, df.columns != 'label']
         X = df[df['filename'].isin(audio_files)]
         y = enc.fit_transform(X['label'])
-        X_train, X_val, y_train, y_val = train_test_split(X, y, train_size=0.9, random_state=42, stratify=X['label'])
+        X_train, X_val, y_train, y_val = train_test_split(X, y, train_size=0.8, random_state=42, stratify=X['label'])
         X_val, X_test, y_val, y_test = train_test_split(X_val, y_val, train_size=0.5, random_state=101, stratify=X_val['label'])
         print('Label Proportions Train:', X_train['label'].value_counts())
         print('Label Proportions Val:', X_val['label'].value_counts())

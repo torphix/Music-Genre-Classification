@@ -1,5 +1,6 @@
 import os
 import json
+import pickle
 import torch
 import numpy as np
 import pandas as pd
@@ -144,15 +145,20 @@ def models_tab_ui():
         st.plotly_chart(fig)
     with col2:
         st.text('Metrics')
-        st.image('logs/highest_score/metrics.png', width=500)        
+        st.image('logs/highest_score/metrics.png', width=500)
         
 
     st.title('Machine Learning Results')
     col1, col2 = st.columns([4,4])
-    with col1:   
-        st.text('SVM Confusion Matrix')
-        st.image('logs/highest_score/svm_confusion_matrix.png', width=400)   
+    with col1:
+        with open('logs/highest_score/svm_cm.pickle', 'rb') as f:
+            cm = pickle.load(f)
+        fig = ptx.imshow(cm, text_auto=True, title='SVM confusion Matrix (3-sec aggregated)')
+        st.plotly_chart(fig)
 
     with col2:
-        st.text('Summary of Classical ML Techniques used')
-        st.image('logs/highest_score/summary_of_ml_techniques.png', width=400)   
+        with open('logs/highest_score/ml_techniques_df.pickle', 'rb') as f:
+            df = pickle.load(f)
+
+        fig = ptx.bar(df, x='model', y='accuracy', title='Summary of Classical ML Techniques used as baseline')
+        st.plotly_chart(fig)
