@@ -1,0 +1,7 @@
+df_dir: data/train_test_val_split
+image_path: 
+batch_size: 32
+resnet_type: resnet18
+epochs: 10
+learning_rate: 1.0e-3
+ckpt_path: logs/keras/run-1/epoch-20.keras

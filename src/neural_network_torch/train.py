@@ -5,7 +5,6 @@ import torch
 import logging
 import torch.nn as nn
 from tqdm import tqdm
-import lovely_tensors as lt
 import torch.nn.functional as F
 from .data import load_dataloaders
 from prettytable import PrettyTable

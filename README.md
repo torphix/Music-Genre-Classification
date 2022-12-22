@@ -13,3 +13,7 @@ pip install -r requirements.txt
 - run command ```python main.py fit_classical_models``` to run the classical machine learning models
 
 - run command ```python main.py evaluate_classical_models``` to evaluate the classical machine learning models
+
+
+## TODO:
+- Add preprocessing pipeline to one command

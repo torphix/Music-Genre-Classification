@@ -1,9 +1,9 @@
 import os
-import torch
 import shutil
 import pickle
 import librosa
 import pathlib
+import skimage.io
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -23,8 +23,15 @@ class Preprocessor:
 
         self.df = df
 
-    @staticmethod
-    def mel_to_img(mel):
+    def convert_mel_folder_to_img(self, in_dir, out_dir):
+        shutil.rmtree(out_dir, ignore_errors=True)
+        for genre in tqdm(os.listdir(in_dir), 'Processing'):
+            os.makedirs(f'{out_dir}/{genre}', exist_ok=True)
+            for file in os.listdir(f'{in_dir}/{genre}'):
+                mel = self.mel_to_img(np.load(f'{in_dir}/{genre}/{file}'))
+                skimage.io.imsave(f'{out_dir}/{genre}/{".".join(file.split(".")[:-1])}.png', mel)
+
+    def mel_to_img(self, mel):
         def _scale_minmax(X, min=0.0, max=1.0):
             X_std = (X - X.min()) / (X.max() - X.min())
             X_scaled = X_std * (max - min) + min
@@ -32,7 +39,7 @@ class Preprocessor:
         # min-max scale to fit inside 8-bit range
         img = _scale_minmax(mel, 0, 255).astype(np.uint8)
         img = np.flip(img, axis=0) # put low frequencies at the bottom in image
-        return 255-img
+        return np.expand_dims((255-img), axis=-1)
 
     def split_audio(self):
         '''
@@ -44,7 +51,7 @@ class Preprocessor:
             for file in os.listdir(f'{self.data_path}/genres_original/{genre}'):
                 wav, sr = librosa.load(f'{self.data_path}/genres_original/{genre}/{file}')
                 for idx,i in enumerate(range(0,30,3)):
-                    wavfile.write(f'{self.data_path}/genres_split/{genre}/{idx}_{file}', sr, wav[i*sr:(i+3)*sr])
+                    wavfile.write(f'{self.data_path}/genres_split/{genre}/{idx}.{file}', sr, wav[i*sr:(i+3)*sr])
 
     def extract_mel_spectrogram(self, progress_bar_callback=None):  
         for i, genre in enumerate(tqdm(os.listdir(f'{self.data_path}/genres_split'), 'Extracting Mel Spectrograms')):
@@ -59,10 +66,10 @@ class Preprocessor:
                     # Corrupted wav file
                     os.remove(f'{self.data_path}/genres_split/{genre}/{file}')
                 mel_spec = librosa.feature.melspectrogram(y=wav, sr=sr)
-                mel_spec = torch.tensor(mel_spec)
+                mel_spec = np.array(mel_spec)
                 # Normalise mel
-                mel_spec = torch.log(torch.clamp(mel_spec, min=1e-5))
-                torch.save(mel_spec[:,:130], f'{self.data_path}/mel_specs/{genre}/{".".join(file.split(".")[0:2])}.pt')
+                mel_spec = np.log(np.clip(mel_spec, a_min=1e-5, a_max=np.max(mel_spec)))
+                np.save(f'{self.data_path}/mel_specs/{genre}/{".".join(file.split(".")[0:-1])}.npy', mel_spec[:,:130])
 
     def create_genre_df(self):
         output_files, genre = [], []
