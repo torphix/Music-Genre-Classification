@@ -6,7 +6,6 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 
 from src.preprocessing import Preprocessor
-from src.supervised_learning.parameter_search import search_svm_hyperparams
 from src.supervised_learning.supervised_learning import compute_metrics
 
 
