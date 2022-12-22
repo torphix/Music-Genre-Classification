@@ -1,8 +1,12 @@
 ## Setup
 ```
-python -m venv venv
-source venv/bin/activate
+conda env create -f conda.yaml
+conda activate music
 pip install -r requirements.txt
+
+<!-- python -m venv venv -->
+<!-- source venv/bin/activate -->
+<!-- pip install -r requirements.txt -->
 ```
 
 ## Commands
