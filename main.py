@@ -26,7 +26,7 @@ if __name__ == '__main__':
         processor = Preprocessor()
         processor.split_audio()
         processor.extract_mel_spectrogram()
-        processor.convert_mel_folder_to_img('data/mel_specs', 'data/images_split')
+        # processor.convert_mel_folder_to_img('data/mel_specs', 'data/images_split')
         # processor.scale_features()
         # processor.train_test_validation_split()
 
