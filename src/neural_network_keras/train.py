@@ -1,16 +1,12 @@
 import os
 import yaml
 import librosa
-import tensorflow as tf
 from tensorflow import keras
 import matplotlib.pyplot as plt
-from .model import make_model_2d
-from tensorflow.keras import layers
 from src.preprocessing import Preprocessor
+from .model import make_model_1d, make_model_2d
 from src.neural_network_keras.data import load_dataset
 from keras.preprocessing.image import ImageDataGenerator
-from tensorflow.compat.v1 import ConfigProto
-from tensorflow.compat.v1 import InteractiveSession
 
 
 class TFTrainer:
@@ -22,9 +18,15 @@ class TFTrainer:
             print('Loading Model From CKPT')
             self.model = keras.models.load_model(self.config['ckpt_path'])
         else:
-            self.model = make_model_2d(input_shape=(128,130), num_classes=10, resnet_type=self.config['resnet_type'])
+            if self.config['data_type'] == 'mel':
+                self.model = make_model_1d(input_shape=(128,130), num_classes=10, resnet_type=self.config['resnet_type'])
+            elif self.config['data_type'] == 'img':
+                self.model = make_model_2d(input_shape=(256,256,3), num_classes=10, resnet_type=self.config['resnet_type'])
 
-        self.train_ds, self.val_ds, self.test_ds = load_dataset('data/train_test_val_split_short_files', self.config['batch_size'])
+        self.train_ds, self.val_ds, self.test_ds = load_dataset(
+                                                        'data/train_test_val_split_short_files', 
+                                                        self.config['batch_size'], 
+                                                        self.config['data_type'])
 
     def run(self):
         os.makedirs(f"logs/keras/", exist_ok=True)

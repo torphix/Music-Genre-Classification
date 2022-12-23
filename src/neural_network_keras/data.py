@@ -6,6 +6,7 @@ import tensorflow as tf
 from keras.preprocessing.image import ImageDataGenerator
 import numpy as np
 import keras
+from src.preprocessing import Preprocessor
 
 
 class DataGenerator(keras.utils.Sequence):
@@ -73,65 +74,71 @@ class DataGenerator(keras.utils.Sequence):
         return X, keras.utils.to_categorical(y, num_classes=len(self.classes_dict.keys()))
 
 
-def load_dataset(df_dir, batch_size):
+def load_dataset(df_dir, batch_size, data_type):
+
     # Format data into keras folder structure 
     print('Loading Dataset...')
     X_train_df = pd.read_csv(f"{df_dir}/X_train.csv")
     X_val_df = pd.read_csv(f"{df_dir}/X_val.csv")
     X_test_df = pd.read_csv(f"{df_dir}/X_test.csv")
+
     # Copy files into tempdir
     shutil.rmtree('data/keras_dataset', ignore_errors=True)
     for idx, row in X_train_df.iterrows():
         genre = row['label']
-        fname = ".".join(row["filename"].split(".")[:-1])
+        fname = ".".join(row["filename"].split(".")[:-1]) + '.npy'
         os.makedirs(f'data/keras_dataset/train/{genre}/', exist_ok=True)
-        shutil.copyfile(f'data/mel_specs/{genre}/{fname}.npy', 
-                        f'data/keras_dataset/train/{genre}/{fname}.npy')
+        shutil.copyfile(f'data/mel_specs/{genre}/{fname}', 
+                        f'data/keras_dataset/train/{genre}/{fname}')
     for idx, row in X_val_df.iterrows():
         genre = row['label']
-        fname = ".".join(row["filename"].split(".")[:-1])
+        fname = ".".join(row["filename"].split(".")[:-1]) + '.npy'
         os.makedirs(f'data/keras_dataset/val/{genre}/', exist_ok=True)
-        shutil.copyfile(f'data/mel_specs/{genre}/{fname}.npy', 
-                        f'data/keras_dataset/val/{genre}/{fname}.npy')
+        shutil.copyfile(f'data/mel_specs/{genre}/{fname}', 
+                        f'data/keras_dataset/val/{genre}/{fname}')
     for idx, row in X_test_df.iterrows():
         genre = row['label']
-        fname = ".".join(row["filename"].split(".")[:-1])
+        fname = ".".join(row["filename"].split(".")[:-1]) + '.npy'
         os.makedirs(f'data/keras_dataset/test/{genre}/', exist_ok=True)
-        shutil.copyfile(f'data/mel_specs/{genre}/{fname}.npy', 
-                        f'data/keras_dataset/test/{genre}/{fname}.npy')
-	
-    # datagen = DataGenerator()
-	# flow_from_directory gets label for an image from the sub-directory it is placed in
+        shutil.copyfile(f'data/mel_specs/{genre}/{fname}', 
+                        f'data/keras_dataset/test/{genre}/{fname}')
+
 	# Generate Train data
-    # train_dl = datagen.flow_from_directory(
-	# 		'data/keras_dataset/train',
-	# 		target_size=(256,256),
-    #         shuffle=True,
-	# 		batch_size=batch_size,
-	# 		subset='training',
-	# 		class_mode='categorical')
-    # val_dl = datagen.flow_from_directory(
-	# 		'data/keras_dataset/val',
-	# 		target_size=(256,256),
-	# 		batch_size=128,
-    #         shuffle=False,
-	# 		class_mode='categorical')
-    # test_dl = datagen.flow_from_directory(
-	# 		'data/keras_dataset/test',
-	# 		target_size=(256,256),
-	# 		batch_size=batch_size,
-    #         shuffle=False,
-	# 		class_mode='categorical')
-    train_dl = DataGenerator('data/keras_dataset/train', 
-                             'data/train_test_val_split_short_files/X_train.csv',
-                             64, 
-                             shuffle=True)
-    val_dl = DataGenerator('data/keras_dataset/val', 
-                             'data/train_test_val_split_short_files/X_val.csv',
-                             64, 
-                             shuffle=False)
-    test_dl = DataGenerator('data/keras_dataset/test', 
-                             'data/train_test_val_split_short_files/X_test.csv',
-                             64, 
-                             shuffle=False)
+    if data_type == 'img':
+        Preprocessor.convert_mel_folder_to_img_static('data/keras_dataset/train/', 'data/keras_dataset/train/')
+        Preprocessor.convert_mel_folder_to_img_static('data/keras_dataset/val/', 'data/keras_dataset/val/')
+        Preprocessor.convert_mel_folder_to_img_static('data/keras_dataset/test/', 'data/keras_dataset/test/')
+        datagen = ImageDataGenerator()
+        train_dl = datagen.flow_from_directory(
+        		'data/keras_dataset/train',
+        		target_size=(256,256),
+                shuffle=True,
+        		batch_size=batch_size,
+        		subset='training',
+        		class_mode='categorical')
+        val_dl = datagen.flow_from_directory(
+        		'data/keras_dataset/val',
+        		target_size=(256,256),
+        		batch_size=128,
+                shuffle=False,
+        		class_mode='categorical')
+        test_dl = datagen.flow_from_directory(
+        		'data/keras_dataset/test',
+        		target_size=(256,256),
+        		batch_size=batch_size,
+                shuffle=False,
+        		class_mode='categorical')
+    elif data_type == 'mel':
+        train_dl = DataGenerator('data/keras_dataset/train', 
+                                'data/train_test_val_split_short_files/X_train.csv',
+                                64, 
+                                shuffle=True)
+        val_dl = DataGenerator('data/keras_dataset/val', 
+                                'data/train_test_val_split_short_files/X_val.csv',
+                                64, 
+                                shuffle=False)
+        test_dl = DataGenerator('data/keras_dataset/test', 
+                                'data/train_test_val_split_short_files/X_test.csv',
+                                64, 
+                                shuffle=False)
     return train_dl, val_dl, test_dl
