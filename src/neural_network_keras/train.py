@@ -27,6 +27,7 @@ class TFTrainer:
         self.train_ds, self.val_ds, self.test_ds = load_dataset('data/train_test_val_split_short_files', self.config['batch_size'])
 
     def run(self):
+        os.makedirs(f"logs/keras/", exist_ok=True)
         os.makedirs(f"logs/keras/run-{len(os.listdir('logs/keras'))+1}", exist_ok=True)
         callbacks = [
             keras.callbacks.ModelCheckpoint(f"logs/keras/run-{len(os.listdir('logs/keras'))+1}" + "/epoch-{epoch}.keras"),

@@ -80,20 +80,20 @@ def load_dataset(df_dir, batch_size):
         genre = row['label']
         fname = ".".join(row["filename"].split(".")[:-1])
         os.makedirs(f'data/keras_dataset/train/{genre}/', exist_ok=True)
-        shutil.copyfile(f'data/images_split/{genre}/{fname}.png', 
-                        f'data/keras_dataset/train/{genre}/{fname}.png')
+        shutil.copyfile(f'data/mel_specs/{genre}/{fname}.npy', 
+                        f'data/keras_dataset/train/{genre}/{fname}.npy')
     for idx, row in X_val_df.iterrows():
         genre = row['label']
         fname = ".".join(row["filename"].split(".")[:-1])
         os.makedirs(f'data/keras_dataset/val/{genre}/', exist_ok=True)
-        shutil.copyfile(f'data/images_split/{genre}/{fname}.png', 
-                        f'data/keras_dataset/val/{genre}/{fname}.png')
+        shutil.copyfile(f'data/mel_specs/{genre}/{fname}.npy', 
+                        f'data/keras_dataset/val/{genre}/{fname}.npy')
     for idx, row in X_test_df.iterrows():
         genre = row['label']
         fname = ".".join(row["filename"].split(".")[:-1])
         os.makedirs(f'data/keras_dataset/test/{genre}/', exist_ok=True)
-        shutil.copyfile(f'data/images_split/{genre}/{fname}.png', 
-                        f'data/keras_dataset/test/{genre}/{fname}.png')
+        shutil.copyfile(f'data/mel_specs/{genre}/{fname}.npy', 
+                        f'data/keras_dataset/test/{genre}/{fname}.npy')
 	
     # datagen = DataGenerator()
 	# flow_from_directory gets label for an image from the sub-directory it is placed in
