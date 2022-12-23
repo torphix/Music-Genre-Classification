@@ -163,17 +163,10 @@ def models_tab_ui():
     st.title('Machine Learning Results')
     col1, col2 = st.columns([4,4])
     with col1:
-        with open('../logs/highest_score/svm_cm.pickle', 'rb') as f:
-            cm = pickle.load(f)
-        fig = ptx.imshow(cm, text_auto=True, title='SVM confusion Matrix (3-sec aggregated)')
-        st.plotly_chart(fig)
+        st.image('../logs/highest_score/summary_of_ml_techniques.png', width=500)
 
     with col2:
-        with open('../logs/highest_score/ml_techniques_df.pickle', 'rb') as f:
-            df = pickle.load(f)
-
-        fig = ptx.bar(df, x='model', y='accuracy', title='Summary of Classical ML Techniques used as baseline')
-        st.plotly_chart(fig)
+        st.image('../logs/highest_score/svm_confusion_matrix.png', width=500)
 
 
 OVERVIEW_DESCRIPTION = '''

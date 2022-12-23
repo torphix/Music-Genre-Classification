@@ -2,13 +2,8 @@ import os
 import sys
 import argparse
 from tqdm import tqdm
-from streamlit.web import cli as stcli
 from src.preprocessing import Preprocessor
 from src.neural_network_keras.train import TFTrainer
-try:
-    from src.neural_network_torch.train import Trainer as TorchTrainer
-except:
-    print('Must use pytorch env if wanting to run pytorch models')
 from src.supervised_learning.features_3_sec_compare import fit_models as fit_classical_models
 from src.supervised_learning.evaluate_models import evaluate_models as evaluate_classical_models
 
@@ -37,6 +32,7 @@ if __name__ == '__main__':
                               '/home/j/Desktop/Programming/Uni/Music-Genre-Classification/data/keras_dataset/val')
 
     elif command == 'train_nn_torch':
+        raise DeprecationWarning('Pytorch code is deprecated in favour of keras, due to administrative requirements, please run "train_nn_keras" instead')
         print(f'Found: {len(os.listdir("configs"))} configs starting runs')
         i = 0
         for i, config in enumerate(tqdm(os.listdir('configs'), f'Experiment: {i+1}', leave=False)):

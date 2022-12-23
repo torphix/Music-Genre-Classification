@@ -7,3 +7,4 @@ learning_rate: 1.0e-4
 ckpt_path: #logs/keras/run-7/epoch-24.keras
 check_val_n_epochs: 1
 data_type: img # mel or img (img recommended achieves highest accuracy)
+use_pretrained_model: True
