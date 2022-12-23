@@ -2,6 +2,7 @@
 ```
 conda env create -f conda.yaml
 conda activate music
+export XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/lib/cuda
 pip install -r requirements.txt
 
 <!-- python -m venv venv -->

@@ -36,8 +36,8 @@ if __name__ == '__main__':
 
     elif command == 'dir_inference_nn_keras':
         trainer = TFTrainer()
-        trainer.inference_dir('/home/j/Desktop/Programming/Uni/Music-Genre-Classification/logs/keras/run-1/epoch-20.keras',
-                              '/home/j/Desktop/Programming/Uni/Music-Genre-Classification/data/keras_dataset/test')
+        trainer.inference_dir('logs/keras/run-11/epoch-27.keras',
+                              '/home/j/Desktop/Programming/Uni/Music-Genre-Classification/data/keras_dataset/val')
 
     elif command == 'train_nn_torch':
         print(f'Found: {len(os.listdir("configs"))} configs starting runs')

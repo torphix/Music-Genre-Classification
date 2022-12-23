@@ -13,7 +13,6 @@ def load_dataset(df_dir, batch_size):
     X_val_df = pd.read_csv(f"{df_dir}/X_val.csv")
     X_test_df = pd.read_csv(f"{df_dir}/X_test.csv")
     # Copy files into tempdir
-    root_dir = pathlib.Path(__file__).parent.parent
     shutil.rmtree('data/keras_dataset', ignore_errors=True)
     for idx, row in X_train_df.iterrows():
         genre = row['label']
@@ -40,18 +39,20 @@ def load_dataset(df_dir, batch_size):
     train_dl = datagen.flow_from_directory(
 			'data/keras_dataset/train',
 			target_size=(256,256),
+            shuffle=True,
 			batch_size=batch_size,
 			subset='training',
 			class_mode='categorical')
     val_dl = datagen.flow_from_directory(
 			'data/keras_dataset/val',
 			target_size=(256,256),
-			batch_size=batch_size,
-			subset='validation',
+			batch_size=128,
+            shuffle=False,
 			class_mode='categorical')
     test_dl = datagen.flow_from_directory(
 			'data/keras_dataset/test',
 			target_size=(256,256),
 			batch_size=batch_size,
+            shuffle=False,
 			class_mode='categorical')
     return train_dl, val_dl, test_dl

@@ -1,12 +1,16 @@
 import os
 import yaml
+import librosa
 import tensorflow as tf
 from tensorflow import keras
+import matplotlib.pyplot as plt
 from .model import make_model_2d
 from tensorflow.keras import layers
+from src.preprocessing import Preprocessor
 from src.neural_network_keras.data import load_dataset
 from keras.preprocessing.image import ImageDataGenerator
-
+from tensorflow.compat.v1 import ConfigProto
+from tensorflow.compat.v1 import InteractiveSession
 
 
 class TFTrainer:
@@ -25,7 +29,8 @@ class TFTrainer:
     def run(self):
         callbacks = [
             keras.callbacks.ModelCheckpoint(f"logs/keras/run-{len(os.listdir('logs/keras'))+1}" + "/epoch-{epoch}.keras"),
-            tf.keras.callbacks.ReduceLROnPlateau(
+            keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=5),
+            keras.callbacks.ReduceLROnPlateau(
                                 monitor='val_loss', 
                                 factor=0.2,
                                 patience=5, 
@@ -33,20 +38,41 @@ class TFTrainer:
         ]
         self.model.compile(
             optimizer=keras.optimizers.Adam(self.config['learning_rate']),
-            loss="categorical_crossentropy",
-            metrics=["accuracy"],
+            loss=keras.losses.CategoricalCrossentropy(from_logits=False),
+            metrics=["acc"],
         )
-        self.model.fit(
+        for x in self.val_ds:
+            print(x)
+        history = self.model.fit(
             self.train_ds,
             epochs=self.config['epochs'],
             callbacks=callbacks,
             validation_data=self.val_ds,
+            validation_freq=4,
         )
+        print('Evaluating on Validation')
+        self.model.evaluate(self.val_ds)
+        print('Evaluating on Testset')
         self.model.evaluate(self.test_ds)
 
+        # summarize history for accuracy
+        plt.plot(history.history['acc'])
+        plt.plot(history.history['val_acc'])
+        plt.title('model accuracy')
+        plt.ylabel('accuracy')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'test'], loc='upper left')
+        plt.show()
 
-    def inference_wav_file(self, ckpt_path):
+
+    def inference_wav_file(self, wav_path, ckpt_path):
         model = keras.models.load_model(ckpt_path)
+        # Convert to correct data format
+        wav, sr = librosa.load(wav_path)
+
+        Preprocessor.mel_to_img()
+
+        model.predict
         # TODO add wav file inference here
 
 

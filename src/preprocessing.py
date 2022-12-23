@@ -28,10 +28,11 @@ class Preprocessor:
         for genre in tqdm(os.listdir(in_dir), 'Processing'):
             os.makedirs(f'{out_dir}/{genre}', exist_ok=True)
             for file in os.listdir(f'{in_dir}/{genre}'):
-                mel = self.mel_to_img(np.load(f'{in_dir}/{genre}/{file}'))
+                mel = Preprocessor.mel_to_img(np.load(f'{in_dir}/{genre}/{file}'))
                 skimage.io.imsave(f'{out_dir}/{genre}/{".".join(file.split(".")[:-1])}.png', mel)
-
-    def mel_to_img(self, mel):
+                
+    @staticmethod
+    def mel_to_img(mel):
         def _scale_minmax(X, min=0.0, max=1.0):
             X_std = (X - X.min()) / (X.max() - X.min())
             X_scaled = X_std * (max - min) + min
