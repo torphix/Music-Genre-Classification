@@ -25,7 +25,15 @@ class Preprocessor:
 
     def convert_mel_folder_to_img(self, in_dir, out_dir):
         shutil.rmtree(out_dir, ignore_errors=True)
-        for genre in tqdm(os.listdir(in_dir), 'Processing'):
+        for genre in tqdm(os.listdir(in_dir), 'Converting Mels to Imgs'):
+            os.makedirs(f'{out_dir}/{genre}', exist_ok=True)
+            for file in os.listdir(f'{in_dir}/{genre}'):
+                mel = Preprocessor.mel_to_img(np.load(f'{in_dir}/{genre}/{file}'))
+                skimage.io.imsave(f'{out_dir}/{genre}/{".".join(file.split(".")[:-1])}.png', mel)
+
+    @staticmethod
+    def convert_mel_folder_to_img_static(in_dir, out_dir):
+        for genre in tqdm(os.listdir(in_dir), 'Converting Mels to Imgs'):
             os.makedirs(f'{out_dir}/{genre}', exist_ok=True)
             for file in os.listdir(f'{in_dir}/{genre}'):
                 mel = Preprocessor.mel_to_img(np.load(f'{in_dir}/{genre}/{file}'))

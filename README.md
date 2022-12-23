@@ -4,6 +4,7 @@ conda env create -f conda.yaml
 conda activate music
 export XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/lib/cuda
 pip install -r requirements.txt
+In order to configure different parameters such as input datatypes, model sizes etc look under configs/keras_config.yaml
 
 <!-- python -m venv venv -->
 <!-- source venv/bin/activate -->
