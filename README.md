@@ -21,7 +21,7 @@ pip install -r requirements/requirements_ui.txt
 
 ## Commands
 
-- run command ```python main.py ui``` (Activate UI environment first) to launch the UI providing a succinct overview of the project.
+- run command ```python ui.py``` (Activate UI environment first) to launch the UI providing a succinct overview of the project.
 
 - run command ```python main.py process_data``` (Activate Keras Neural Network setup first)
 

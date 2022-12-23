@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 from tqdm import tqdm
+from streamlit.web import cli as stcli
 from src.preprocessing import Preprocessor
 from src.neural_network_keras.train import TFTrainer
 try:
