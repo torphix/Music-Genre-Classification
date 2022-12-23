@@ -19,6 +19,8 @@ pip install -r requirements.txt
 
 - run command ```python main.py evaluate_classical_models``` to evaluate the classical machine learning models
 
+- open notebook `Classical ML data analysis.ipynb` for a brief analysis with classical ml models.
+
 
 ## TODO:
 - Add preprocessing pipeline to one command
