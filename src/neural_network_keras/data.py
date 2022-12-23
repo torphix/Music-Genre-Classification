@@ -62,10 +62,15 @@ class DataGenerator(keras.utils.Sequence):
     def __data_generation(self, fnames):
         'Generates data containing batch_size samples' # X : (n_samples, *dim, n_channels)
         # Initialization
-        labels = [self.classes_dict[fname.split(".")[1]] for fname in fnames]
+        X = np.empty((self.batch_size, 128, 130))
+        y = np.empty((self.batch_size), dtype=int)
         # Generate data
-        X = [np.load(f'{self.root_path}/{fname.split(".")[1]}/{fname}')/255 for fname in fnames]
-        return X, keras.utils.to_categorical(labels, num_classes=len(self.classes_dict.keys()))
+        for i, fname in enumerate(fnames):
+            mel = np.load(f'{self.root_path}/{fname.split(".")[1]}/{fname}')
+            mel = np.concatenate((mel, np.zeros((128, 130-mel.shape[1]))), axis=1)
+            X[i,] = mel
+            y[i] = self.classes_dict[fname.split(".")[1]]
+        return X, keras.utils.to_categorical(y, num_classes=len(self.classes_dict.keys()))
 
 
 def load_dataset(df_dir, batch_size):

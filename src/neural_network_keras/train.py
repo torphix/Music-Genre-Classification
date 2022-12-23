@@ -22,7 +22,7 @@ class TFTrainer:
             print('Loading Model From CKPT')
             self.model = keras.models.load_model(self.config['ckpt_path'])
         else:
-            self.model = make_model_2d(input_shape=(256,256,3), num_classes=10, resnet_type=self.config['resnet_type'])
+            self.model = make_model_2d(input_shape=(128,130), num_classes=10, resnet_type=self.config['resnet_type'])
 
         self.train_ds, self.val_ds, self.test_ds = load_dataset('data/train_test_val_split_short_files', self.config['batch_size'])
 
@@ -48,7 +48,7 @@ class TFTrainer:
             epochs=self.config['epochs'],
             callbacks=callbacks,
             validation_data=self.val_ds,
-            validation_freq=4,
+            validation_freq=self.config['check_val_n_epochs'],
         )
         print('Evaluating on Validation')
         self.model.evaluate(self.val_ds)
