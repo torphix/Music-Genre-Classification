@@ -6,6 +6,5 @@ mel_specs/
 sb.py
 genres_split/
 images_split/
-*.npy
 keras_dataset/
 *.keras

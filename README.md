@@ -1,7 +1,7 @@
 ## Setup
 
 - Note: code has been tested on linux and macOS we have tried to keep the environment as OS agnostic as possible however as we don't own a windows machine we cannot on windowsOS.
-- Due to package conflicts between tensorflow and streamlit (package used to create UI) two diffent environment setups are necessary 
+- Due to package conflicts between tensorflow and streamlit (package used to create UI) it is necessary to use a seperate environment for  viewing the UI
 ### Keras Neural Network Environment Setup
 ```
 conda env create -f conda.yaml
@@ -21,7 +21,7 @@ pip install -r requirements/requirements_ui.txt
 
 ## Commands
 
-- run command ```python main.py ui``` (Activate UI environment first) to launch the UI providing a succincte overview of the project.
+- run command ```python main.py ui``` (Activate UI environment first) to launch the UI providing a succinct overview of the project.
 
 - run command ```python main.py process_data``` (Activate Keras Neural Network setup first)
 

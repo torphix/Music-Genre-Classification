@@ -2,10 +2,6 @@ import os
 import sys
 import argparse
 from tqdm import tqdm
-try:
-    from streamlit.web import cli as stcli
-except:
-    print('To use the streamlit UI create new venv and install ui_requirements.txt')
 from src.preprocessing import Preprocessor
 from src.neural_network_keras.train import TFTrainer
 try:
@@ -57,6 +53,4 @@ if __name__ == '__main__':
         trainer = TorchTrainer('./config.yaml')
         _, test_acc, test_cf = trainer.eval_iter(trainer.test_dl, True)
 
-    elif command == 'ui':
-        sys.argv = ["streamlit", "run", "src/frontend/frontend.py"]
-        sys.exit(stcli.main())
+

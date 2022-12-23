@@ -1,3 +1,42 @@
+import pandas as pd
+import plotly.express as px
+import plotly.figure_factory as ff
+
+# Functions
+def load_data(data_url):
+    data = pd.read_csv(data_url)
+    return data
+
+def create_barchart(data:list, x_label:str, y_label:str):
+    fig = px.bar(data, x=x_label, y=y_label, color=x_label)
+    return fig
+
+def create_distchart(data:list, labels:list, bin_size:int):
+    fig = ff.create_distplot(data, labels, bin_size=bin_size)
+    return fig
+
+def get_feature_distributions(main_df, groups) -> dict:
+    '''
+    return format is dict of list 
+    {"name of feature": [data, distribution_label, bin_size, description]}
+    '''
+    chroma_stft_mean = [main_df.iloc[groups.groups[k]]['chroma_stft_mean'].to_list() 
+                             for k,v in groups.groups.items()]
+    rms_mean = [main_df.iloc[groups.groups[k]]['rms_mean'].to_list() 
+                for k,v in groups.groups.items()]
+    mfcc19_mean = [main_df.iloc[groups.groups[k]]['mfcc1_mean'].to_list() 
+                for k,v in groups.groups.items()]
+    return {
+        'chroma_stft_mean':[
+            chroma_stft_mean, 'chroma stft mean distribution', 0.01, CHROMA_STFT], 
+        'rms_mean':[
+            rms_mean, 'rms mean, mean of distributions', 0.01, RMS], 
+        'mfcc1_mean':[
+            mfcc19_mean, 'mfcc1 mean, mean of distributions', 20, MFCC], 
+    }
+
+
+
 CHROMA_STFT = '''
 <div style="text-align: center; font-size:20px">
     Chroma short time fourier transform describes the harmonic and melodic characteristics of audio whilst being sturdy against changes in instrumentation.

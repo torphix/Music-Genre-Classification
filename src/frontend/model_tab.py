@@ -1,7 +1,4 @@
-import torch
-import matplotlib.pyplot as plt
-from src.preprocessing import Preprocessor
-
+import numpy as np
 
 OVERVIEW_TEXT = '''
 <div style="text-align: center; font-size:20px; width:80%; margin:auto;">
@@ -20,23 +17,20 @@ OVERVIEW_TEXT = '''
 <br/>  <br/><hr/>
 '''
 
-def extract_features(data_processor_bar):
-    preprocessor = Preprocessor()
-    preprocessor.scale_features()
-    preprocessor.extract_mel_spectrogram(data_processor_bar)
+
 
 def get_sample_data():
     specs = {
-        'blues':torch.load('data/mel_samples/blues.00000.pt').numpy(),
-        'classical':torch.load('data/mel_samples/classical.00000.pt').numpy(),
-        'country':torch.load('data/mel_samples/country.00000.pt').numpy(),
-        'disco':torch.load('data/mel_samples/disco.00000.pt').numpy(),
-        'hiphop':torch.load('data/mel_samples/hiphop.00000.pt').numpy(),
-        'jazz':torch.load('data/mel_samples/jazz.00000.pt').numpy(),
-        'metal':torch.load('data/mel_samples/metal.00000.pt').numpy(),
-        'pop':torch.load('data/mel_samples/pop.00000.pt').numpy(),
-        'reggae':torch.load('data/mel_samples/reggae.00000.pt').numpy(),
-        'rock':torch.load('data/mel_samples/rock.00000.pt').numpy(),
+        'blues':np.load('frontend/mel_samples/bluesnpy.npy'),
+        'classical':np.load('frontend/mel_samples/classicalnpy.npy'),
+        'country':np.load('frontend/mel_samples/countrynpy.npy'),
+        'disco':np.load('frontend/mel_samples/disconpy.npy'),
+        'hiphop':np.load('frontend/mel_samples/hiphopnpy.npy'),
+        'jazz':np.load('frontend/mel_samples/jazznpy.npy'),
+        'metal':np.load('frontend/mel_samples/metalnpy.npy'),
+        'pop':np.load('frontend/mel_samples/popnpy.npy'),
+        'reggae':np.load('frontend/mel_samples/reggaenpy.npy'),
+        'rock':np.load('frontend/mel_samples/rocknpy.npy'),
         }
     return specs
 
