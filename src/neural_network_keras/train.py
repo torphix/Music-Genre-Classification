@@ -33,16 +33,14 @@ class TFTrainer:
             keras.callbacks.ReduceLROnPlateau(
                                 monitor='val_loss', 
                                 factor=0.2,
-                                patience=5, 
-                                min_lr=0.001)
+                                patience=3, 
+                                min_lr=0.00001)
         ]
         self.model.compile(
             optimizer=keras.optimizers.Adam(self.config['learning_rate']),
             loss=keras.losses.CategoricalCrossentropy(from_logits=False),
             metrics=["acc"],
         )
-        for x in self.val_ds:
-            print(x)
         history = self.model.fit(
             self.train_ds,
             epochs=self.config['epochs'],
@@ -69,16 +67,11 @@ class TFTrainer:
         model = keras.models.load_model(ckpt_path)
         # Convert to correct data format
         wav, sr = librosa.load(wav_path)
-
         Preprocessor.mel_to_img()
-
         model.predict
-        # TODO add wav file inference here
-
 
     def inference_dir(self, ckpt_path, data_dir):
         model = keras.models.load_model(ckpt_path)
-
         datagen = ImageDataGenerator(rescale=1./255, fill_mode='nearest')
         test_dl = datagen.flow_from_directory(
                 data_dir,

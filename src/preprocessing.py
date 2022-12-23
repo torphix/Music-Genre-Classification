@@ -55,6 +55,7 @@ class Preprocessor:
                     wavfile.write(f'{self.data_path}/genres_split/{genre}/{idx}.{file}', sr, wav[i*sr:(i+3)*sr])
 
     def extract_mel_spectrogram(self, progress_bar_callback=None):  
+        shutil.rmtree('data/mel_specs', ignore_errors=True)
         for i, genre in enumerate(tqdm(os.listdir(f'{self.data_path}/genres_split'), 'Extracting Mel Spectrograms')):
             if progress_bar_callback is not None:
                 progress_bar_callback.progress(i*10)
