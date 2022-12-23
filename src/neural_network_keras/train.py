@@ -4,7 +4,7 @@ import librosa
 from tensorflow import keras
 import matplotlib.pyplot as plt
 from src.preprocessing import Preprocessor
-from .model import make_model_1d, make_model_2d
+from .model import load_model
 from src.neural_network_keras.data import load_dataset
 from keras.preprocessing.image import ImageDataGenerator
 
@@ -14,14 +14,10 @@ class TFTrainer:
         with open('configs/keras_config.yaml', 'r') as f:
             self.config = yaml.load(f.read(), Loader=yaml.FullLoader)
 
-        if self.config['ckpt_path'] is not None and self.config['ckpt_path'] != '':
-            print('Loading Model From CKPT')
-            self.model = keras.models.load_model(self.config['ckpt_path'])
-        else:
-            if self.config['data_type'] == 'mel':
-                self.model = make_model_1d(input_shape=(128,130), num_classes=10, resnet_type=self.config['resnet_type'])
-            elif self.config['data_type'] == 'img':
-                self.model = make_model_2d(input_shape=(256,256,3), num_classes=10, resnet_type=self.config['resnet_type'])
+        self.model = load_model(self.config['data_type'], 
+                                self.config['resnet_type'], 
+                                self.config['ckpt_path'], 
+                                self.config['use_pretrained_model'])
 
         self.train_ds, self.val_ds, self.test_ds = load_dataset(
                                                         'data/train_test_val_split_short_files', 

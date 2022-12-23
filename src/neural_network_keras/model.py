@@ -113,23 +113,32 @@ def get_resnet_filters(resnet_type):
 
 
 
-def load_pretrained(resnet_type):
-    ResNet50_model = ResNet50(weights='imagenet', include_top=False, input_shape=(150,150,3), classes=6)
+def load_pretrained():
+    ResNet50_model = keras.applications.ResNet50(weights='imagenet', include_top=False, input_shape=(256,256,3), classes=10)
 
-    for layers in ResNet50_model.layers:
-        layers.trainable=True
+    for layer in ResNet50_model.layers:
+        layer.trainable=True
 
-    opt = SGD(lr=0.01,momentum=0.7)
-    resnet50_x = Flatten()(ResNet50_model.output)
-    resnet50_x = Dense(256,activation='relu')(resnet50_x)
-    resnet50_x = Dense(6,activation='softmax')(resnet50_x)
-    resnet50_x_final_model = Model(inputs=ResNet50_model.input, outputs=resnet50_x)
-    resnet50_x_final_model.compile(loss = 'categorical_crossentropy', optimizer= opt, metrics=['acc'])
+    x = layers.Flatten()(ResNet50_model.output)
+    x = layers.Dense(256,activation='relu')(x)
+    x = layers.Dense(10,activation='softmax')(x)
+    model = keras.Model(inputs=ResNet50_model.input, outputs=x)
+    return model
 
-    number_of_epochs = 60
-    resnet_filepath = 'resnet50'+'-saved-model-{epoch:01D}-val_acc-{val_acc:.2f}.hdf5'
-    resnet_checkpoint = tf.keras.callbacks.ModelCheckpoint(resnet_filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
-    resnet_early_stopping = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=5)
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.05, patience=5, min_lr=0.000002)
-    callbacklist = [resnet_checkpoint,resnet_early_stopping,reduce_lr]
-    resnet50_history = resnet50_x_final_model.fit(train_generator, epochs = number_of_epochs ,validation_data = validation_generator,callbacks=callbacklist,verbose=1)
+
+def load_model(data_type, resnet_type, ckpt_path=None, use_pretrained=False):
+    if use_pretrained:
+        print('Loading Pretrained Model')
+        model = load_pretrained()
+    else:
+        if ckpt_path is not None and ckpt_path != '':
+            print('Loading Model From CKPT')
+            model = keras.models.load_model(ckpt_path)
+        else:
+            print(f'Training from scratch a {resnet_type} model')
+            if data_type == 'mel':
+                model = make_model_1d(input_shape=(128,130), num_classes=10, resnet_type=resnet_type)
+            elif data_type == 'img':
+                model = make_model_2d(input_shape=(256,256,3), num_classes=10, resnet_type=resnet_type)
+    return model
+    
